@@ -56,7 +56,7 @@ Companies receive large volumes of customer support tickets across categories (d
 | Module | Title | Target Deliverable | Status |
 | :--- | :--- | :--- | :--- |
 | **Module 1** | Project Setup & Dataset Prep | Folder structure, venv, requirements.txt, sample CSV, data dictionary, inspection script | **TESTED** |
-| **Module 2** | Data Ingestion (File & API) | CSV ingestion module, documented local/mock API client & endpoint | NOT STARTED |
+| **Module 2** | Data Ingestion (CSV File) | CSV file reader, validation, schema audit, empty/malformed handling | **TESTED** |
 | **Module 3** | Data Transformation & Quality | Pandas cleaning, deduplication, resolution metrics, DQ report | NOT STARTED |
 | **Module 4** | Relational Database & Storage | SQLite schema, idempotent loader, duplicate prevention | NOT STARTED |
 | **Module 5** | SQL Analytics Queries | 7 business SQL queries, verification tests | NOT STARTED |
@@ -102,7 +102,9 @@ Companies receive large volumes of customer support tickets across categories (d
 - `scripts/generate_sample_dataset.py`: Generator script ensuring correct CSV standard escaping and quote wrapping.
 - `scripts/inspect_dataset.py`: Verified dataset auditing script reporting shape, nulls, and distributions.
 - `src/__init__.py`: Application source package marker.
+- `src/ingestion.py`: Robust CSV reader and validator supporting file paths and Streamlit buffer uploads, column alias normalization, and error auditing.
 - `tests/__init__.py`: Test suite package marker.
+- `tests/test_ingestion.py`: 7 automated pytest test cases covering valid files, missing files, 0-byte files, header-only files, missing required columns, alias normalization, and in-memory buffer ingestion.
 
 ---
 
@@ -111,6 +113,7 @@ Companies receive large volumes of customer support tickets across categories (d
 2. **Deterministic Fallback for GenAI:** In corporate reviews or offline demos where an external API key is invalid or rate-limited, the system seamlessly falls back to a template-driven analytical report without crashing or fabricating fake AI output.
 3. **Local REST API Mock:** Zendesk and enterprise tools require paid accounts or business credit cards; a lightweight local mock server provides a real HTTP request/response pipeline matching the capstone requirement at zero cost.
 4. **CSV Quoting Protocol:** Used Python `csv.writer` with `QUOTE_MINIMAL` to prevent commas inside ticket descriptions from breaking Pandas CSV tokenization.
+5. **Polymorphic Ingestion Target (`str`, `Path`, `BytesIO`, `StringIO`):** Designed `read_csv_tickets` in `src/ingestion.py` to ingest from both filesystem paths and uploaded stream buffers, guaranteeing identical validation in the CLI and the Streamlit UI.
 
 ---
 
@@ -120,6 +123,7 @@ Companies receive large volumes of customer support tickets across categories (d
 - **2026-10-31:** Created Python 3.13 virtual environment (`.venv`) and installed all core dependencies (`pandas`, `streamlit`, `plotly`, `requests`, `fastapi`, `uvicorn`, `python-dotenv`, `google-genai`, `pytest`). Verified via import check.
 - **2026-10-31:** Created comprehensive `data/DATA_DICTIONARY.md` mapping columns to business questions.
 - **2026-10-31:** Fixed CSV unquoted-comma parsing error by implementing `scripts/generate_sample_dataset.py` using `csv.writer`; verified clean parsing of 60 rows across 10 attributes via `scripts/inspect_dataset.py`. Module 1 marked **TESTED**.
+- **2026-10-31:** Implemented Module 2 (`src/ingestion.py`) with empty-file guards, column aliasing, and non-destructive DataFrame ingestion. Created `tests/test_ingestion.py` with 7 test cases. All 7 tests passed. Module 2 marked **TESTED**.
 
 ---
 
@@ -129,17 +133,18 @@ Companies receive large volumes of customer support tickets across categories (d
 ---
 
 ## 10. Known Limitations and Pending Work
-- Raw data currently exists as a flat file; ingestion pipeline (CSV upload + API endpoint) needs to be built in Module 2.
+- Data ingestion handles raw CSV structure and minimum column checks; data cleaning (null handling, date parsing, resolution time computation, and duplicate filtering) is scheduled for Module 3.
 
 ---
 
 ## 11. Current State and Exact Next Step
-- **Current State:** Module 1 completed and verified. Virtual environment ready, dataset generated and audited, inspection script tested.
-- **Exact Next Step:** Proceed to **Module 2: Data Ingestion (File and API)**:
-  1. Build `src/ingestion.py` supporting both CSV file reading with validation (empty file checks, malformed row handling).
-  2. Implement a local FastAPI mock support ticket endpoint (`src/mock_api.py`) simulating an external API (e.g., Zendesk-like JSON response).
-  3. Implement API ingestion in `src/ingestion.py` to fetch tickets over HTTP via `requests`.
-  4. Write test script to verify both ingestion routes.
+- **Current State:** Module 1 & Module 2 completed and verified with 100% passing tests.
+- **Exact Next Step:** Proceed to **Module 3: Data Transformation and Quality Audit**:
+  1. Build `src/transformation.py` with Pandas cleaning pipeline.
+  2. Implement duplicate detection & removal based on `ticket_id`.
+  3. Standardize date formats (`created_at`, `resolved_at`) and compute `resolution_time_hours` and `is_unresolved`.
+  4. Build Data Quality (DQ) report measuring accepted, corrected, and rejected records.
+  5. Write tests for transformation logic in `tests/test_transformation.py`.
 
 ---
 
