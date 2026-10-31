@@ -1,3 +1,5 @@
+import colors from 'tailwindcss/colors.js';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
@@ -12,6 +14,7 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       colors: {
+        slate: colors.zinc,
         brand: {
           50: '#eef2ff',
           100: '#e0e7ff',

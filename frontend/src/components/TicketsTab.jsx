@@ -221,7 +221,7 @@ export default function TicketsTab({ refreshTrigger }) {
                         onClick={() => toggleExpand(t.ticket_id)}
                         className={`cursor-pointer transition-colors ${
                           isExpanded
-                            ? "bg-indigo-50/40 dark:bg-indigo-950/20"
+                            ? "bg-indigo-50/40 dark:bg-slate-800/60"
                             : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         }`}
                       >

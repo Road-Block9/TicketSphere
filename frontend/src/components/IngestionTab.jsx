@@ -200,7 +200,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
                   <button
                     type="button"
                     onClick={() => setActiveTab("overview")}
-                    className="flex-1 py-1.5 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-medium rounded-lg text-xs flex items-center justify-center space-x-1 transition-colors"
+                    className="flex-1 py-1.5 px-3 bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 font-medium rounded-lg text-xs flex items-center justify-center space-x-1 transition-colors"
                   >
                     <span>Explore in Analytics</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -327,7 +327,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
                   <button
                     type="button"
                     onClick={() => setActiveTab("overview")}
-                    className="flex-1 py-1.5 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-medium rounded-lg text-xs flex items-center justify-center space-x-1 transition-colors"
+                    className="flex-1 py-1.5 px-3 bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 font-medium rounded-lg text-xs flex items-center justify-center space-x-1 transition-colors"
                   >
                     <span>Explore in Analytics</span>
                     <ArrowRight className="w-3.5 h-3.5" />
