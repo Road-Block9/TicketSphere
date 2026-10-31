@@ -57,7 +57,7 @@ Companies receive large volumes of customer support tickets across categories (d
 | :--- | :--- | :--- | :--- |
 | **Module 1** | Project Setup & Dataset Prep | Folder structure, venv, requirements.txt, sample CSV, data dictionary, inspection script | **TESTED** |
 | **Module 2** | Data Ingestion (CSV File) | CSV file reader, validation, schema audit, empty/malformed handling | **TESTED** |
-| **Module 3** | Data Transformation & Quality | Pandas cleaning, deduplication, resolution metrics, DQ report | NOT STARTED |
+| **Module 3** | Data Transformation & Quality | Pandas cleaning, deduplication, resolution metrics, DQ report | **TESTED** |
 | **Module 4** | Relational Database & Storage | SQLite schema, idempotent loader, duplicate prevention | NOT STARTED |
 | **Module 5** | SQL Analytics Queries | 7 business SQL queries, verification tests | NOT STARTED |
 | **Module 6** | GenAI Business Assistant | Grounded prompt engineer, LLM integration & fallback reporter | NOT STARTED |
@@ -89,6 +89,8 @@ Companies receive large volumes of customer support tickets across categories (d
 | `subject` | TEXT | Short summary / issue title |
 | `description` | TEXT | Detailed customer complaint text |
 | `resolution_notes`| TEXT | Notes logged by support agent upon closure |
+| `resolution_time_hours`| REAL / FLOAT | Calculated elapsed hours from created_at to resolved_at (NULL if unresolved) |
+| `is_unresolved` | INTEGER | Derived boolean flag (1 if Open/Pending, 0 if Resolved/Closed) |
 
 ---
 
@@ -103,8 +105,10 @@ Companies receive large volumes of customer support tickets across categories (d
 - `scripts/inspect_dataset.py`: Verified dataset auditing script reporting shape, nulls, and distributions.
 - `src/__init__.py`: Application source package marker.
 - `src/ingestion.py`: Robust CSV reader and validator supporting file paths and Streamlit buffer uploads, column alias normalization, and error auditing.
+- `src/transformation.py`: Comprehensive cleaning engine with duplicate removal, taxonomy standardisation, timestamp parsing, `resolution_time_hours` calculation, and a structured `DataQualityReport`.
 - `tests/__init__.py`: Test suite package marker.
 - `tests/test_ingestion.py`: 7 automated pytest test cases covering valid files, missing files, 0-byte files, header-only files, missing required columns, alias normalization, and in-memory buffer ingestion.
+- `tests/test_transformation.py`: 9 automated pytest test cases covering deduplication, missing primary keys, bad timestamps, status/category normalisation, duration calculation, false date clearance, and negative duration anomalies. (16 total tests across project).
 
 ---
 
@@ -114,6 +118,8 @@ Companies receive large volumes of customer support tickets across categories (d
 3. **Local REST API Mock:** Zendesk and enterprise tools require paid accounts or business credit cards; a lightweight local mock server provides a real HTTP request/response pipeline matching the capstone requirement at zero cost.
 4. **CSV Quoting Protocol:** Used Python `csv.writer` with `QUOTE_MINIMAL` to prevent commas inside ticket descriptions from breaking Pandas CSV tokenization.
 5. **Polymorphic Ingestion Target (`str`, `Path`, `BytesIO`, `StringIO`):** Designed `read_csv_tickets` in `src/ingestion.py` to ingest from both filesystem paths and uploaded stream buffers, guaranteeing identical validation in the CLI and the Streamlit UI.
+6. **No Fabricated Resolution Times:** Strictly set `resolution_time_hours` and `resolved_at` to `None`/`NaN` for Open and Pending tickets. Cleared false resolution dates on unresolved tickets to prevent skewing average resolution metrics.
+7. **Rejection vs Imputation Policy:** Records missing primary key `ticket_id` or unparseable `created_at` are rejected with entries logged in `DataQualityReport.rejection_log`. Missing optional string fields (`subject`, `description`, `customer_id`) are imputed with traceable audit markers (`"No Subject Provided"`, `"CUST-UNKNOWN"`) and logged in `imputed_fields`.
 
 ---
 
@@ -124,6 +130,7 @@ Companies receive large volumes of customer support tickets across categories (d
 - **2026-10-31:** Created comprehensive `data/DATA_DICTIONARY.md` mapping columns to business questions.
 - **2026-10-31:** Fixed CSV unquoted-comma parsing error by implementing `scripts/generate_sample_dataset.py` using `csv.writer`; verified clean parsing of 60 rows across 10 attributes via `scripts/inspect_dataset.py`. Module 1 marked **TESTED**.
 - **2026-10-31:** Implemented Module 2 (`src/ingestion.py`) with empty-file guards, column aliasing, and non-destructive DataFrame ingestion. Created `tests/test_ingestion.py` with 7 test cases. All 7 tests passed. Module 2 marked **TESTED**.
+- **2026-10-31:** Implemented Module 3 (`src/transformation.py`) with duplicate removal, taxonomy standardisation, timestamp parsing, `resolution_time_hours` calculation, and `DataQualityReport`. Created `tests/test_transformation.py` with 9 unit test cases. Total test suite of 16 tests passing in 0.83s. Module 3 marked **TESTED**.
 
 ---
 
@@ -133,18 +140,17 @@ Companies receive large volumes of customer support tickets across categories (d
 ---
 
 ## 10. Known Limitations and Pending Work
-- Data ingestion handles raw CSV structure and minimum column checks; data cleaning (null handling, date parsing, resolution time computation, and duplicate filtering) is scheduled for Module 3.
+- Data is currently transformed in-memory; storage in SQLite and idempotent insertion logic is scheduled for Module 4.
 
 ---
 
 ## 11. Current State and Exact Next Step
-- **Current State:** Module 1 & Module 2 completed and verified with 100% passing tests.
-- **Exact Next Step:** Proceed to **Module 3: Data Transformation and Quality Audit**:
-  1. Build `src/transformation.py` with Pandas cleaning pipeline.
-  2. Implement duplicate detection & removal based on `ticket_id`.
-  3. Standardize date formats (`created_at`, `resolved_at`) and compute `resolution_time_hours` and `is_unresolved`.
-  4. Build Data Quality (DQ) report measuring accepted, corrected, and rejected records.
-  5. Write tests for transformation logic in `tests/test_transformation.py`.
+- **Current State:** Modules 1, 2, and 3 completed and verified with 16 passing unit tests.
+- **Exact Next Step:** Proceed to **Module 4: Relational Database Storage (SQLite)**:
+  1. Design and implement SQLite schema in `src/database.py`.
+  2. Implement idempotent data loading with duplicate prevention (`INSERT OR IGNORE` / `INSERT OR REPLACE`).
+  3. Support storing Data Quality execution logs and ticket records.
+  4. Write test cases in `tests/test_database.py`.
 
 ---
 
