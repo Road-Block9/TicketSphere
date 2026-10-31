@@ -9,7 +9,6 @@ import {
   AlertCircle,
   RefreshCw,
   FileText,
-  HelpCircle,
 } from "lucide-react";
 import { api } from "../api";
 

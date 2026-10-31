@@ -10,8 +10,6 @@ import {
   AlertCircle,
   Filter,
   X,
-  Calendar,
-  Layers,
   RefreshCw,
   SlidersHorizontal,
 } from "lucide-react";
@@ -27,8 +25,6 @@ import {
   Pie,
   Cell,
   Legend,
-  LineChart,
-  Line,
   AreaChart,
   Area,
 } from "recharts";

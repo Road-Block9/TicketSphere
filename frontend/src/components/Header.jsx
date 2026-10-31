@@ -1,5 +1,5 @@
 import React from "react";
-import { Sun, Moon, RefreshCw, Server, AlertCircle } from "lucide-react";
+import { Sun, Moon, RefreshCw, Server } from "lucide-react";
 
 export default function Header({
   activeTab,

@@ -5,9 +5,6 @@ import {
   Globe,
   CheckCircle,
   AlertCircle,
-  Check,
-  ShieldCheck,
-  Database,
   ArrowRight,
   RefreshCw,
 } from "lucide-react";

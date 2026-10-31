@@ -160,7 +160,7 @@ def run_api_pipeline(
         "database": {
             "records_inserted": api_result["inserted_count"],
             "records_skipped_duplicate": api_result["skipped_count"],
-            "total_in_db": api_result["total_in_db"],
+            "total_in_db": get_ticket_count(db_path),
         },
         "updated_kpis": {
             "total_tickets": fresh_kpis["total_tickets"],
