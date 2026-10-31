@@ -62,7 +62,7 @@ Companies receive large volumes of customer support tickets across categories (d
 | **Module 5** | SQL Analytics Queries | 7 business SQL queries, verification tests | **TESTED** |
 | **Module 6** | API Data Ingestion | Mock REST API (FastAPI) & HTTP client (requests), timeout/auth handling | **TESTED** |
 | **Module 7** | GenAI Business Assistant | Grounded prompt engineer, LLM integration & fallback reporter | **TESTED** |
-| **Module 8** | Streamlit Web Application | Multi-tab dashboard: Upload, API Ingestion, DQ Report, Analytics, AI Report | NOT STARTED |
+| **Module 8** | React Frontend & Flask API | Modern React + Tailwind dashboard, Flask backend API, theme toggle | **TESTED** |
 | **Module 9** | Testing, Documentation & Wrap-Up| Automated tests, README, presentation outline, final review | NOT STARTED |
 
 ---
@@ -70,9 +70,12 @@ Companies receive large volumes of customer support tickets across categories (d
 ## 4. Environment and Setup
 - **Operating System:** Windows 10/11
 - **Python Version:** 3.13.3
+- **Node.js Version:** 22.23.0 (npm 11.17.0)
 - **Git Version:** 2.54.0.windows.1
 - **Working Directory:** `d:\A Capstone`
 - **Virtual Environment:** `.venv` (created via `python -m venv .venv`, all dependencies installed and verified)
+- **Backend Server:** Flask REST API on `http://127.0.0.1:5000`
+- **Frontend Server:** Vite + React + Tailwind CSS on `http://127.0.0.1:5173`
 
 ---
 
@@ -98,29 +101,41 @@ Companies receive large volumes of customer support tickets across categories (d
 
 ## 6. Implemented Features and Important Files
 - `CONTEXT.md`: Permanent continuity and state tracker.
-- `.gitignore`: Configured to exclude `.venv/`, `__pycache__/`, `*.db`, `.env`, `.pytest_cache/`.
-- `.env.example`: Configuration template for API keys, DB path, and mock API host/port.
-- `requirements.txt`: Pinned dependencies for Pandas, Streamlit, Plotly, Requests, FastAPI, Uvicorn, pytest, google-genai.
+- `.gitignore`: Configured to exclude `.venv/`, `__pycache__/`, `*.db`, `.env`, `.pytest_cache/`, `frontend/node_modules/`, `frontend/dist/`.
+- `.env.example`: Configuration template for API keys, DB path, Flask port, and mock API host/port.
+- `requirements.txt`: Pinned dependencies for Pandas, Requests, FastAPI, Uvicorn, Flask, Flask-CORS, python-dotenv, google-genai, pytest.
 - `data/DATA_DICTIONARY.md`: Complete column specifications, integrity rules, and mapping to 7 business questions.
 - `data/raw/customer_support_tickets.csv`: 60 realistic ticket records with valid timestamps, categories, and resolution notes.
 - `data/processed/customer_support.db`: Persistent SQLite database initialized with `tickets` and `ingestion_logs` tables.
 - `scripts/generate_sample_dataset.py`: Generator script ensuring correct CSV standard escaping and quote wrapping.
 - `scripts/inspect_dataset.py`: Verified dataset auditing script reporting shape, nulls, and distributions.
 - `src/__init__.py`: Application source package marker.
-- `src/ingestion.py`: Robust CSV reader and validator supporting file paths and Streamlit buffer uploads, column alias normalization, and error auditing.
+- `src/ingestion.py`: Robust CSV reader and validator supporting file paths and uploaded buffers, column alias normalization, and error auditing.
 - `src/transformation.py`: Comprehensive cleaning engine with duplicate removal, taxonomy standardisation, timestamp parsing, `resolution_time_hours` calculation, and a structured `DataQualityReport`.
 - `src/database.py`: Database management module with SQLite schema initialization, transactional idempotent loader (`INSERT OR IGNORE`), duplicate prevention, and parameterised SQL query executor.
 - `src/analytics.py`: SQL analytics engine implementing the 7 mandatory business queries, aggregated KPI dictionary, and structured grounding digest for GenAI.
 - `src/mock_api.py`: Local FastAPI REST service simulating an enterprise support API with Swagger docs (`/docs`), health check (`/health`), query params, and API key authentication.
 - `src/api_client.py`: Production-grade HTTP API client with timeout protection, auth headers, and unified pipeline connector (`ingest_api_pipeline`).
 - `src/genai_assistant.py`: AI Support Insights Assistant integrating Google Gemini API via official SDK, strictly grounded prompt engineering, and an honest deterministic fallback reporter.
+- `src/flask_app.py`: Flask REST API backend exposing `/api/health`, `/api/analytics/kpis`, `/api/tickets`, `/api/ingest/csv`, `/api/ingest/api`, `/api/ai/report` with CORS enabled.
+- `frontend/package.json`: React 19 + Vite project with Tailwind CSS v3.4.17, PostCSS, Autoprefixer, and Lucide React icons.
+- `frontend/tailwind.config.js`: Tailwind configuration supporting class-based dark mode (`darkMode: 'class'`) and Google Inter/JetBrains Mono fonts.
+- `frontend/src/api.js`: Central frontend API client connecting to Flask endpoints with error handling and environment variable support (`VITE_API_URL`).
+- `frontend/src/components/Sidebar.jsx`: Navigation sidebar with brand header, module links, and live Flask connectivity status badge.
+- `frontend/src/components/Header.jsx`: Top navigation header with module titles, breadcrumbs, live data refresh button, and light/dark theme switch.
+- `frontend/src/components/OverviewTab.jsx`: Analytics & KPIs view with 5 stat cards, category distribution bars, status breakdown cards, resolution time by category table, and immediate management attention hotspots.
+- `frontend/src/components/IngestionTab.jsx`: Dual-pipeline ingestion dashboard for CSV drag-and-drop file upload and REST API trigger with live Data Quality audit breakdown.
+- `frontend/src/components/GenAITab.jsx`: GenAI executive management report generator with loading spinner, runtime stats, model badge, grounding disclaimer banner, and copy-to-clipboard functionality.
+- `frontend/src/components/TicketsTab.jsx`: Ticket explorer with live search, status/category/priority filter dropdowns, count badge, responsive data table, and expandable ticket details.
+- `frontend/src/App.jsx`: Main application shell with theme persistence in `localStorage`, active tab routing, and central data synchronization.
 - `tests/__init__.py`: Test suite package marker.
 - `tests/test_ingestion.py`: 7 automated pytest test cases covering file reading, validation, empty files, and buffer streams.
 - `tests/test_transformation.py`: 9 automated pytest test cases covering deduplication, taxonomy mapping, duration math, and anomaly clearance.
 - `tests/test_database.py`: 6 automated pytest test cases covering schema creation, duplicate prevention on repeated imports, data retrieval, and parameterised queries.
 - `tests/test_analytics.py`: 8 automated pytest test cases covering all 7 business SQL queries and empty-database resilience.
 - `tests/test_api_ingestion.py`: 9 automated pytest test cases covering FastAPI endpoints, auth, status filtering, connection errors, timeouts, and end-to-end pipeline execution.
-- `tests/test_genai.py`: 5 automated pytest test cases covering grounded prompts, deterministic fallback, empty data handling, simulated API calls, and exception fallback. (44 total tests across project).
+- `tests/test_genai.py`: 5 automated pytest test cases covering grounded prompts, deterministic fallback, empty data handling, simulated API calls, and exception fallback.
+- `tests/test_flask_api.py`: 6 automated pytest test cases validating Flask REST API endpoints (`/api/health`, `/api/analytics/kpis`, `/api/tickets`, `/api/ingest/csv`, `/api/ingest/api`, `/api/ai/report`). (50 total passing unit tests across repository).
 
 ---
 
@@ -129,14 +144,17 @@ Companies receive large volumes of customer support tickets across categories (d
 2. **Deterministic Fallback for GenAI:** In corporate reviews or offline demos where an external API key is invalid or rate-limited, the system seamlessly falls back to a template-driven analytical report without crashing or fabricating fake AI output.
 3. **Local REST API Mock:** Zendesk and enterprise tools require paid accounts or business credit cards; a lightweight local mock server provides a real HTTP request/response pipeline matching the capstone requirement at zero cost.
 4. **CSV Quoting Protocol:** Used Python `csv.writer` with `QUOTE_MINIMAL` to prevent commas inside ticket descriptions from breaking Pandas CSV tokenization.
-5. **Polymorphic Ingestion Target (`str`, `Path`, `BytesIO`, `StringIO`):** Designed `read_csv_tickets` in `src/ingestion.py` to ingest from both filesystem paths and uploaded stream buffers, guaranteeing identical validation in the CLI and the Streamlit UI.
+5. **Polymorphic Ingestion Target (`str`, `Path`, `BytesIO`, `StringIO`):** Designed `read_csv_tickets` in `src/ingestion.py` to ingest from both filesystem paths and uploaded stream buffers, guaranteeing identical validation in the CLI, Flask API, and the React UI.
 6. **No Fabricated Resolution Times:** Strictly set `resolution_time_hours` and `resolved_at` to `None`/`NaN` for Open and Pending tickets. Cleared false resolution dates on unresolved tickets to prevent skewing average resolution metrics.
 7. **Rejection vs Imputation Policy:** Records missing primary key `ticket_id` or unparseable `created_at` are rejected with entries logged in `DataQualityReport.rejection_log`. Missing optional string fields (`subject`, `description`, `customer_id`) are imputed with traceable audit markers (`"No Subject Provided"`, `"CUST-UNKNOWN"`) and logged in `imputed_fields`.
 8. **Idempotent Ingestion & Duplicate Prevention:** Employed `INSERT OR IGNORE` with pre- and post-count delta calculation. Ensures re-importing identical files causes zero duplicate records while tracking skipped rows in `ingestion_logs`.
 9. **Query Performance Optimization:** Added composite single-column indexes on `status`, `category`, `created_at`, `priority`, and `is_unresolved` to ensure sub-millisecond analytical aggregations.
-10. **Dual-Format Analytics API:** `src/analytics.py` functions return raw Pandas DataFrames for Plotly visualisations in Streamlit, AND pre-formatted text digests (`format_analytics_summary_text`) to ground the GenAI model strictly in verified facts.
+10. **Dual-Format Analytics API:** `src/analytics.py` functions return raw Pandas DataFrames for chart visualisations AND pre-formatted text digests (`format_analytics_summary_text`) to ground the GenAI model strictly in verified facts.
 11. **Unified Pipeline Architecture:** Both CSV ingestion (`src/ingestion.py`) and API ingestion (`src/api_client.py`) flow through the exact same transformation engine (`src/transformation.py`) and SQLite storage loader (`src/database.py`), preventing code duplication and guaranteeing identical quality standards across channels.
 12. **Anti-Hallucination Grounding & Free-Tier SDK:** Utilized Google's latest `google-genai` SDK targeting `gemini-2.5-flash` (zero cost free tier) with strict grounding constraints. Provided an honest fallback report clearly labeled whenever external keys are omitted.
+13. **Separate Frontend & Backend Architecture:** React + Vite in `frontend/` and Flask in `src/flask_app.py` ensure clear separation of concerns. Flask acts purely as an API gateway that invokes Modules 1 to 7 without duplicating any business or data pipeline logic.
+14. **Persistent Dark/Light Mode:** Controlled via Tailwind `class` on `<html className="dark">` and synchronized with `localStorage.theme`, respecting system theme on initial visit.
+15. **Configurable API Client:** `frontend/src/api.js` defaults to `http://127.0.0.1:5000` but dynamically reads `VITE_API_URL` from Vite's environment variables for zero-code configuration during deployment.
 
 ---
 
@@ -152,6 +170,7 @@ Companies receive large volumes of customer support tickets across categories (d
 - **2026-10-31:** Implemented Module 5 (`src/analytics.py`) answering the 7 core business questions, KPI aggregation, and GenAI grounding formatter. Created `tests/test_analytics.py` with 8 unit test cases. Total test suite of 30 tests passing in 1.77s. Module 5 marked **TESTED**.
 - **2026-10-31:** Implemented Module 6 (`src/mock_api.py` and `src/api_client.py`) adding documented mock REST API with Swagger UI and HTTP client with error/timeout handling. Connected API ingestion end-to-end to transformation and SQLite loader. Created `tests/test_api_ingestion.py` with 9 unit test cases. Total test suite of 39 tests passing in 2.45s. Module 6 marked **TESTED**.
 - **2026-10-31:** Implemented Module 7 (`src/genai_assistant.py`) integrating Gemini API with grounded prompt engineering and an honest deterministic fallback reporter. Fixed Windows cp1252 terminal UnicodeEncodeError by configuring utf-8 stdout; verified via standalone execution. Created `tests/test_genai.py` with 5 unit test cases. Total test suite of 44 tests passing in 2.95s. Module 7 marked **TESTED**.
+- **2026-10-31:** Implemented Module 8 (`src/flask_app.py` & `frontend/` React + Vite + Tailwind CSS dashboard). Added `flask` and `flask-cors` to requirements. Built REST endpoints connecting to existing Modules 1 to 7 without duplicating logic. Created `tests/test_flask_api.py` with 6 automated tests (all 50 tests pass). Built React components (`Sidebar`, `Header`, `OverviewTab`, `IngestionTab`, `GenAITab`, `TicketsTab`), centralized API client (`api.js`), and dark mode theme toggle with `localStorage` persistence. Verified `npm run build` passes with zero errors, and verified live HTTP responses on `http://127.0.0.1:5000` and `http://127.0.0.1:5173`. Module 8 marked **TESTED**.
 
 ---
 
@@ -161,19 +180,17 @@ Companies receive large volumes of customer support tickets across categories (d
 ---
 
 ## 10. Known Limitations and Pending Work
-- Core data engineering, database, analytics, and GenAI reporting modules are complete; web user interface in Streamlit is scheduled for Module 8.
+- Final integration testing across all components, end-to-end verification, README documentation, and presentation outline are scheduled for Module 9.
 
 ---
 
 ## 11. Current State and Exact Next Step
-- **Current State:** Modules 1 through 7 completed and verified with 44 passing unit tests.
-- **Exact Next Step:** Proceed to **Module 8: Streamlit Web Application**:
-  1. Build multi-tab Streamlit dashboard in `app.py`.
-  2. Implement Tab 1: Project Overview, Dataset Summary & Ingestion (CSV upload + API fetch).
-  3. Implement Tab 2: Data Quality & Transformation Audit Report.
-  4. Implement Tab 3: Interactive SQL Analytics & Plotly Charts (Category distribution, status breakdown, resolution SLA, volume over time).
-  5. Implement Tab 4: AI Support Insights Assistant (One-click management report generation with fallback notice).
-  6. Implement Tab 5: Raw & Processed Ticket Table with search/filtering.
+- **Current State:** Modules 1 through 8 completed and verified with 50 passing unit tests and fully working React + Flask web application.
+- **Exact Next Step:** Proceed to **Module 9: Testing, Documentation & Wrap-Up**:
+  1. Review full test coverage across all modules.
+  2. Write comprehensive, beginner-friendly `README.md` with architecture diagrams, setup instructions, and capstone requirements mapping.
+  3. Prepare corporate presentation outline and college evaluation talking points.
+  4. Final repository clean-up and verification.
 
 ---
 
