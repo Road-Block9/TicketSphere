@@ -61,7 +61,7 @@ Companies receive large volumes of customer support tickets across categories (d
 | **Module 4** | Relational Database & Storage | SQLite schema, idempotent loader, duplicate prevention | **TESTED** |
 | **Module 5** | SQL Analytics Queries | 7 business SQL queries, verification tests | **TESTED** |
 | **Module 6** | API Data Ingestion | Mock REST API (FastAPI) & HTTP client (requests), timeout/auth handling | **TESTED** |
-| **Module 7** | GenAI Business Assistant | Grounded prompt engineer, LLM integration & fallback reporter | NOT STARTED |
+| **Module 7** | GenAI Business Assistant | Grounded prompt engineer, LLM integration & fallback reporter | **TESTED** |
 | **Module 8** | Streamlit Web Application | Multi-tab dashboard: Upload, API Ingestion, DQ Report, Analytics, AI Report | NOT STARTED |
 | **Module 9** | Testing, Documentation & Wrap-Up| Automated tests, README, presentation outline, final review | NOT STARTED |
 
@@ -113,12 +113,14 @@ Companies receive large volumes of customer support tickets across categories (d
 - `src/analytics.py`: SQL analytics engine implementing the 7 mandatory business queries, aggregated KPI dictionary, and structured grounding digest for GenAI.
 - `src/mock_api.py`: Local FastAPI REST service simulating an enterprise support API with Swagger docs (`/docs`), health check (`/health`), query params, and API key authentication.
 - `src/api_client.py`: Production-grade HTTP API client with timeout protection, auth headers, and unified pipeline connector (`ingest_api_pipeline`).
+- `src/genai_assistant.py`: AI Support Insights Assistant integrating Google Gemini API via official SDK, strictly grounded prompt engineering, and an honest deterministic fallback reporter.
 - `tests/__init__.py`: Test suite package marker.
 - `tests/test_ingestion.py`: 7 automated pytest test cases covering file reading, validation, empty files, and buffer streams.
 - `tests/test_transformation.py`: 9 automated pytest test cases covering deduplication, taxonomy mapping, duration math, and anomaly clearance.
 - `tests/test_database.py`: 6 automated pytest test cases covering schema creation, duplicate prevention on repeated imports, data retrieval, and parameterised queries.
 - `tests/test_analytics.py`: 8 automated pytest test cases covering all 7 business SQL queries and empty-database resilience.
-- `tests/test_api_ingestion.py`: 9 automated pytest test cases covering FastAPI endpoints, auth, status filtering, connection errors, timeouts, and end-to-end pipeline execution. (39 total tests across project).
+- `tests/test_api_ingestion.py`: 9 automated pytest test cases covering FastAPI endpoints, auth, status filtering, connection errors, timeouts, and end-to-end pipeline execution.
+- `tests/test_genai.py`: 5 automated pytest test cases covering grounded prompts, deterministic fallback, empty data handling, simulated API calls, and exception fallback. (44 total tests across project).
 
 ---
 
@@ -134,6 +136,7 @@ Companies receive large volumes of customer support tickets across categories (d
 9. **Query Performance Optimization:** Added composite single-column indexes on `status`, `category`, `created_at`, `priority`, and `is_unresolved` to ensure sub-millisecond analytical aggregations.
 10. **Dual-Format Analytics API:** `src/analytics.py` functions return raw Pandas DataFrames for Plotly visualisations in Streamlit, AND pre-formatted text digests (`format_analytics_summary_text`) to ground the GenAI model strictly in verified facts.
 11. **Unified Pipeline Architecture:** Both CSV ingestion (`src/ingestion.py`) and API ingestion (`src/api_client.py`) flow through the exact same transformation engine (`src/transformation.py`) and SQLite storage loader (`src/database.py`), preventing code duplication and guaranteeing identical quality standards across channels.
+12. **Anti-Hallucination Grounding & Free-Tier SDK:** Utilized Google's latest `google-genai` SDK targeting `gemini-2.5-flash` (zero cost free tier) with strict grounding constraints. Provided an honest fallback report clearly labeled whenever external keys are omitted.
 
 ---
 
@@ -148,6 +151,7 @@ Companies receive large volumes of customer support tickets across categories (d
 - **2026-10-31:** Implemented Module 4 (`src/database.py`) with SQLite schema, indexes, audit logging, and duplicate prevention via `INSERT OR IGNORE`. Created `tests/test_database.py` with 6 unit test cases. Total test suite of 22 tests passing in 1.23s. Module 4 marked **TESTED**.
 - **2026-10-31:** Implemented Module 5 (`src/analytics.py`) answering the 7 core business questions, KPI aggregation, and GenAI grounding formatter. Created `tests/test_analytics.py` with 8 unit test cases. Total test suite of 30 tests passing in 1.77s. Module 5 marked **TESTED**.
 - **2026-10-31:** Implemented Module 6 (`src/mock_api.py` and `src/api_client.py`) adding documented mock REST API with Swagger UI and HTTP client with error/timeout handling. Connected API ingestion end-to-end to transformation and SQLite loader. Created `tests/test_api_ingestion.py` with 9 unit test cases. Total test suite of 39 tests passing in 2.45s. Module 6 marked **TESTED**.
+- **2026-10-31:** Implemented Module 7 (`src/genai_assistant.py`) integrating Gemini API with grounded prompt engineering and an honest deterministic fallback reporter. Fixed Windows cp1252 terminal UnicodeEncodeError by configuring utf-8 stdout; verified via standalone execution. Created `tests/test_genai.py` with 5 unit test cases. Total test suite of 44 tests passing in 2.95s. Module 7 marked **TESTED**.
 
 ---
 
@@ -157,17 +161,19 @@ Companies receive large volumes of customer support tickets across categories (d
 ---
 
 ## 10. Known Limitations and Pending Work
-- Dual ingestion channels (CSV & API), data transformation, SQLite persistence, and SQL analytics are all completed; GenAI executive assistant integration is scheduled for Module 7.
+- Core data engineering, database, analytics, and GenAI reporting modules are complete; web user interface in Streamlit is scheduled for Module 8.
 
 ---
 
 ## 11. Current State and Exact Next Step
-- **Current State:** Modules 1 through 6 completed and verified with 39 passing unit tests.
-- **Exact Next Step:** Proceed to **Module 7: GenAI Business Assistant**:
-  1. Build `src/genai_assistant.py` integrating the Google Gemini API (or OpenAI API) client using environment variables.
-  2. Implement strict grounding prompts that inject verified SQL metrics from `src/analytics.py` to prevent hallucinations.
-  3. Implement a transparent, high-quality deterministic fallback reporter if no API key is provided or if network fails.
-  4. Write test cases in `tests/test_genai.py`.
+- **Current State:** Modules 1 through 7 completed and verified with 44 passing unit tests.
+- **Exact Next Step:** Proceed to **Module 8: Streamlit Web Application**:
+  1. Build multi-tab Streamlit dashboard in `app.py`.
+  2. Implement Tab 1: Project Overview, Dataset Summary & Ingestion (CSV upload + API fetch).
+  3. Implement Tab 2: Data Quality & Transformation Audit Report.
+  4. Implement Tab 3: Interactive SQL Analytics & Plotly Charts (Category distribution, status breakdown, resolution SLA, volume over time).
+  5. Implement Tab 4: AI Support Insights Assistant (One-click management report generation with fallback notice).
+  6. Implement Tab 5: Raw & Processed Ticket Table with search/filtering.
 
 ---
 
