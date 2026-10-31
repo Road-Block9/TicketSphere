@@ -291,15 +291,15 @@ export default function OverviewTab({
         )}
       </div>
 
-      {/* 5 KPI Stat Cards with Pastel & Coordinated Theme Styling */}
+      {/* 5 KPI Stat Cards with Pastel (Light) & Muted Tinted (Dark) Styling */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Card 1: Total Tickets (Soft sky blue: #D6EBFF) */}
-        <div className="bg-[#D6EBFF] dark:bg-slate-900 p-5 rounded-xl border border-[#BBDDFA] dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+        {/* Card 1: Total Tickets (Light: #D6EBFF, Dark: #292F38) */}
+        <div className="bg-[#D6EBFF] dark:bg-[#292F38] p-5 rounded-xl border border-[#BBDDFA] dark:border-[#3B4654] shadow-sm flex flex-col justify-between transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Total Tickets
             </span>
-            <div className="p-2 rounded-lg bg-blue-600/10 dark:bg-slate-800 text-blue-700 dark:text-slate-300 border border-blue-600/15 dark:border-slate-700">
+            <div className="p-2 rounded-lg bg-blue-600/10 dark:bg-[#91BFFF]/15 text-blue-700 dark:text-[#91BFFF] border border-blue-600/15 dark:border-[#91BFFF]/25">
               <Inbox className="w-4 h-4" />
             </div>
           </div>
@@ -307,19 +307,19 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {total.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
               {hasActiveFilters ? "In filtered subset" : "Ingested in database"}
             </p>
           </div>
         </div>
 
-        {/* Card 2: Open Backlog (Soft lavender: #EBD5FF) */}
-        <div className="bg-[#EBD5FF] dark:bg-slate-900 p-5 rounded-xl border border-[#DFC3FA] dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+        {/* Card 2: Open Backlog (Light: #EBD5FF, Dark: #302A38) */}
+        <div className="bg-[#EBD5FF] dark:bg-[#302A38] p-5 rounded-xl border border-[#DFC3FA] dark:border-[#493B54] shadow-sm flex flex-col justify-between transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Unresolved Backlog
             </span>
-            <div className="p-2 rounded-lg bg-purple-600/10 dark:bg-slate-800 text-purple-700 dark:text-purple-400 border border-purple-600/15 dark:border-slate-700">
+            <div className="p-2 rounded-lg bg-purple-600/10 dark:bg-[#C5A0F5]/15 text-purple-700 dark:text-[#C5A0F5] border border-purple-600/15 dark:border-[#C5A0F5]/25">
               <Clock className="w-4 h-4" />
             </div>
           </div>
@@ -327,19 +327,19 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {unresolved.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
               {openCount} open, {pendingCount} pending
             </p>
           </div>
         </div>
 
-        {/* Card 3: Unresolved Rate (Pale warm yellow: #FFF0BF) */}
-        <div className="bg-[#FFF0BF] dark:bg-slate-900 p-5 rounded-xl border border-[#F6E19E] dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+        {/* Card 3: Unresolved Rate (Light: #FFF0BF, Dark: #353025) */}
+        <div className="bg-[#FFF0BF] dark:bg-[#353025] p-5 rounded-xl border border-[#F6E19E] dark:border-[#51452F] shadow-sm flex flex-col justify-between transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Unresolved Rate
             </span>
-            <div className="p-2 rounded-lg bg-amber-600/15 dark:bg-slate-800 text-amber-800 dark:text-amber-400 border border-amber-600/20 dark:border-slate-700">
+            <div className="p-2 rounded-lg bg-amber-600/15 dark:bg-[#F0C36D]/15 text-amber-800 dark:text-[#F0C36D] border border-amber-600/20 dark:border-[#F0C36D]/25">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -347,19 +347,19 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {unresolvedRate}%
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
               Of active scope
             </p>
           </div>
         </div>
 
-        {/* Card 4: Avg Resolution Hours (Soft peach: #FFE0D2) */}
-        <div className="bg-[#FFE0D2] dark:bg-slate-900 p-5 rounded-xl border border-[#F5C7B3] dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+        {/* Card 4: Avg Resolution Hours (Light: #FFE0D2, Dark: #382A27) */}
+        <div className="bg-[#FFE0D2] dark:bg-[#382A27] p-5 rounded-xl border border-[#F5C7B3] dark:border-[#543B35] shadow-sm flex flex-col justify-between transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Avg Resolution
             </span>
-            <div className="p-2 rounded-lg bg-orange-600/15 dark:bg-slate-800 text-orange-800 dark:text-orange-400 border border-orange-600/20 dark:border-slate-700">
+            <div className="p-2 rounded-lg bg-orange-600/15 dark:bg-[#F29A80]/15 text-orange-800 dark:text-[#F29A80] border border-orange-600/20 dark:border-[#F29A80]/25">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
@@ -367,19 +367,19 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {avgHours} {avgHours !== "0.0" ? "hrs" : ""}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
               {resolvedCount + closedCount} resolved/closed
             </p>
           </div>
         </div>
 
-        {/* Card 5: Critical Attention (Cycles back to Soft sky blue: #D6EBFF) */}
-        <div className="bg-[#D6EBFF] dark:bg-slate-900 p-5 rounded-xl border border-[#BBDDFA] dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+        {/* Card 5: Critical Attention (Light: #D6EBFF, Dark: #292F38) */}
+        <div className="bg-[#D6EBFF] dark:bg-[#292F38] p-5 rounded-xl border border-[#BBDDFA] dark:border-[#3B4654] shadow-sm flex flex-col justify-between transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Critical & High Alert
             </span>
-            <div className="p-2 rounded-lg bg-blue-600/10 dark:bg-slate-800 text-blue-700 dark:text-rose-400 border border-blue-600/15 dark:border-slate-700">
+            <div className="p-2 rounded-lg bg-blue-600/10 dark:bg-[#91BFFF]/15 text-blue-700 dark:text-[#91BFFF] border border-blue-600/15 dark:border-[#91BFFF]/25">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {criticalCount}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
               Immediate management focus
             </p>
           </div>
