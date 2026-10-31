@@ -96,3 +96,16 @@ def test_flask_ai_report_endpoint(client):
     assert "is_fallback" in data
     assert "model_name" in data
     assert len(data["report"]) > 50
+
+
+def test_flask_analytics_kpis_filtered(client):
+    """Verifies that /api/analytics/kpis correctly filters by category and priority query params."""
+    response = client.get("/api/analytics/kpis?category=Delivery%20%26%20Shipping&priority=High")
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert json_data["status"] == "success"
+    kpis = json_data["data"]
+    assert "total_tickets" in kpis
+    # Returned metrics should reflect filtered subset
+    assert isinstance(kpis["category_distribution"], list)
+

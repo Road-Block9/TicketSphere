@@ -65,9 +65,19 @@ def health():
 
 @app.route("/api/analytics/kpis", methods=["GET"])
 def get_kpis():
-    """Returns verified SQL analytics and metrics aggregated in Module 5."""
+    """Returns verified SQL analytics and metrics aggregated in Module 5, with optional query filters."""
     try:
-        raw_kpis = get_all_analytics_kpis()
+        start_date = request.args.get("start_date", default=None, type=str)
+        end_date = request.args.get("end_date", default=None, type=str)
+        category = request.args.get("category", default=None, type=str)
+        priority = request.args.get("priority", default=None, type=str)
+
+        raw_kpis = get_all_analytics_kpis(
+            start_date=start_date,
+            end_date=end_date,
+            category=category,
+            priority=priority
+        )
 
         # Serialize DataFrames into clean JSON lists
         res_metrics = raw_kpis.get("resolution_metrics", {})

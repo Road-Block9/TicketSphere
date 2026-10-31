@@ -113,6 +113,7 @@ function App() {
                 loading={loadingKpis}
                 error={kpisError}
                 onRefresh={loadData}
+                theme={theme}
               />
             )}
 

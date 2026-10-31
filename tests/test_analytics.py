@@ -162,3 +162,29 @@ def test_empty_database_analytics_handling(tmp_path):
 
     summary_text = format_analytics_summary_text(kpis)
     assert "No support ticket data available" in summary_text
+
+
+def test_analytics_filtering_by_date(analytics_db):
+    """Verifies that start_date and end_date filter analytics accurately."""
+    kpis = get_all_analytics_kpis(
+        db_path=analytics_db,
+        start_date="2026-03-02",
+        end_date="2026-03-02"
+    )
+    assert kpis["total_tickets"] == 2
+    assert kpis["unresolved_tickets"] == 2
+
+
+def test_analytics_filtering_by_category_and_priority(analytics_db):
+    """Verifies that category and priority filters narrow metrics accurately."""
+    # Delivery & Shipping category filter
+    kpis_cat = get_all_analytics_kpis(db_path=analytics_db, category="Delivery & Shipping")
+    assert kpis_cat["total_tickets"] == 2
+    assert kpis_cat["resolved_tickets"] == 1
+    assert kpis_cat["closed_tickets"] == 1
+
+    # Critical priority filter
+    kpis_prio = get_all_analytics_kpis(db_path=analytics_db, priority="Critical")
+    assert kpis_prio["total_tickets"] == 1
+    assert kpis_prio["open_tickets"] == 1
+

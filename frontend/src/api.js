@@ -32,9 +32,17 @@ export const api = {
     return request("/api/health");
   },
 
-  // Analytics KPIs
-  async getKpis() {
-    return request("/api/analytics/kpis");
+  // Analytics KPIs with optional filters (start_date, end_date, category, priority)
+  async getKpis(params = {}) {
+    const query = new URLSearchParams();
+    if (params.start_date) query.append("start_date", params.start_date);
+    if (params.end_date) query.append("end_date", params.end_date);
+    if (params.category) query.append("category", params.category);
+    if (params.priority) query.append("priority", params.priority);
+
+    const queryString = query.toString();
+    const endpoint = `/api/analytics/kpis${queryString ? `?${queryString}` : ""}`;
+    return request(endpoint);
   },
 
   // Tickets list with query filters
