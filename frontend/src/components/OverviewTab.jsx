@@ -291,15 +291,15 @@ export default function OverviewTab({
         )}
       </div>
 
-      {/* 5 KPI Stat Cards */}
+      {/* 5 KPI Stat Cards with Pastel & Coordinated Theme Styling */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Total Tickets */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        {/* Card 1: Total Tickets (Soft sky blue: #D6EBFF) */}
+        <div className="bg-[#D6EBFF] dark:bg-[#131b26] p-5 rounded-xl border border-[#BBDDFA] dark:border-blue-900/40 shadow-sm flex flex-col justify-between transition-colors duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Total Tickets
             </span>
-            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+            <div className="p-2 rounded-lg bg-blue-600/10 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-600/15 dark:border-blue-800/40">
               <Inbox className="w-4 h-4" />
             </div>
           </div>
@@ -307,39 +307,39 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {total.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               {hasActiveFilters ? "In filtered subset" : "Ingested in database"}
             </p>
           </div>
         </div>
 
-        {/* Open Backlog */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        {/* Card 2: Open Backlog (Soft lavender: #EBD5FF) */}
+        <div className="bg-[#EBD5FF] dark:bg-[#1a1528] p-5 rounded-xl border border-[#DFC3FA] dark:border-purple-900/40 shadow-sm flex flex-col justify-between transition-colors duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Unresolved Backlog
             </span>
-            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+            <div className="p-2 rounded-lg bg-purple-600/10 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-600/15 dark:border-purple-800/40">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {unresolved.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               {openCount} open, {pendingCount} pending
             </p>
           </div>
         </div>
 
-        {/* Unresolved Rate */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        {/* Card 3: Unresolved Rate (Pale warm yellow: #FFF0BF) */}
+        <div className="bg-[#FFF0BF] dark:bg-[#201c14] p-5 rounded-xl border border-[#F6E19E] dark:border-amber-900/40 shadow-sm flex flex-col justify-between transition-colors duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Unresolved Rate
             </span>
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-lg bg-amber-600/15 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-600/20 dark:border-amber-800/40">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -347,19 +347,19 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {unresolvedRate}%
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Of active scope
             </p>
           </div>
         </div>
 
-        {/* Avg Resolution Hours */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        {/* Card 4: Avg Resolution Hours (Soft peach: #FFE0D2) */}
+        <div className="bg-[#FFE0D2] dark:bg-[#221714] p-5 rounded-xl border border-[#F5C7B3] dark:border-orange-900/40 shadow-sm flex flex-col justify-between transition-colors duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Avg Resolution
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+            <div className="p-2 rounded-lg bg-orange-600/15 dark:bg-orange-950/60 text-orange-800 dark:text-orange-400 border border-orange-600/20 dark:border-orange-800/40">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
@@ -367,27 +367,27 @@ export default function OverviewTab({
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {avgHours} {avgHours !== "0.0" ? "hrs" : ""}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               {resolvedCount + closedCount} resolved/closed
             </p>
           </div>
         </div>
 
-        {/* Critical Attention */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        {/* Card 5: Critical Attention (Cycles back to Soft sky blue: #D6EBFF) */}
+        <div className="bg-[#D6EBFF] dark:bg-[#131b26] p-5 rounded-xl border border-[#BBDDFA] dark:border-blue-900/40 shadow-sm flex flex-col justify-between transition-colors duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Critical & High Alert
             </span>
-            <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+            <div className="p-2 rounded-lg bg-blue-600/10 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-600/15 dark:border-blue-800/40">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
               {criticalCount}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Immediate management focus
             </p>
           </div>
