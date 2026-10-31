@@ -27,10 +27,10 @@ export default function Sidebar({ activeTab, setActiveTab, backendStatus }) {
             </div>
             <div>
               <h1 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
-                SupportSense AI
+                TicketSphere
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Ticket Analytics & GenAI
+                Customer Support Analytics & GenAI
               </p>
             </div>
           </div>

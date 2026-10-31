@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 
-export default function TicketsTab() {
+export default function TicketsTab({ refreshTrigger }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,7 +48,7 @@ export default function TicketsTab() {
 
   useEffect(() => {
     fetchTickets();
-  }, [status, category, priority]);
+  }, [status, category, priority, refreshTrigger]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

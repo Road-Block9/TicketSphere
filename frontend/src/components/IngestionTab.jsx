@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 
-export default function IngestionTab({ onIngestionComplete }) {
+export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
   // CSV Ingestion state
   const [selectedFile, setSelectedFile] = useState(null);
   const [csvLoading, setCsvLoading] = useState(false);
@@ -197,6 +197,26 @@ export default function IngestionTab({ onIngestionComplete }) {
                   </span>
                 </div>
               </div>
+
+              {setActiveTab && (
+                <div className="pt-2 flex items-center space-x-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("overview")}
+                    className="flex-1 py-1.5 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-medium rounded-lg text-xs flex items-center justify-center space-x-1 transition-colors"
+                  >
+                    <span>Explore in Analytics</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("tickets")}
+                    className="py-1.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg text-xs transition-colors"
+                  >
+                    Browse Tickets
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -304,6 +324,26 @@ export default function IngestionTab({ onIngestionComplete }) {
                   </span>
                 </div>
               </div>
+
+              {setActiveTab && (
+                <div className="pt-2 flex items-center space-x-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("overview")}
+                    className="flex-1 py-1.5 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-medium rounded-lg text-xs flex items-center justify-center space-x-1 transition-colors"
+                  >
+                    <span>Explore in Analytics</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("tickets")}
+                    className="py-1.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg text-xs transition-colors"
+                  >
+                    Browse Tickets
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

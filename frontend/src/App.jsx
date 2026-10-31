@@ -118,12 +118,17 @@ function App() {
             )}
 
             {activeTab === "ingestion" && (
-              <IngestionTab onIngestionComplete={loadData} />
+              <IngestionTab
+                onIngestionComplete={loadData}
+                setActiveTab={setActiveTab}
+              />
             )}
 
             {activeTab === "genai" && <GenAITab />}
 
-            {activeTab === "tickets" && <TicketsTab />}
+            {activeTab === "tickets" && (
+              <TicketsTab refreshTrigger={backendStatus.ticketCount} />
+            )}
           </div>
         </main>
       </div>

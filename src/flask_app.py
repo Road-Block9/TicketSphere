@@ -147,6 +147,9 @@ def list_tickets():
         return jsonify({"status": "error", "message": f"Failed to retrieve tickets: {str(e)}"}), 500
 
 
+from src.pipeline import run_csv_pipeline, run_api_pipeline
+
+
 @app.route("/api/ingest/csv", methods=["POST"])
 def ingest_csv():
     """Uploads a CSV file, runs Module 2 validation, Module 3 transformation, and Module 4 storage."""
@@ -158,36 +161,22 @@ def ingest_csv():
         if uploaded_file.filename == "":
             return jsonify({"status": "error", "message": "No selected file."}), 400
 
-        # Step 1: Ingest CSV using Module 2
-        ingestion_res = read_csv_tickets(uploaded_file.stream)
-        if not ingestion_res.success or ingestion_res.data is None:
+        res = run_csv_pipeline(uploaded_file.stream, source_name=uploaded_file.filename)
+        if not res["success"]:
             return jsonify({
                 "status": "error",
-                "message": "CSV Ingestion validation failed.",
-                "errors": ingestion_res.errors,
-                "warnings": ingestion_res.warnings
+                "message": res.get("message", "CSV Ingestion validation failed."),
+                "errors": res.get("errors", []),
+                "warnings": res.get("warnings", [])
             }), 400
-
-        # Step 2: Transform using Module 3
-        cleaned_df, dq_report = clean_and_transform_tickets(ingestion_res.data)
-
-        # Step 3: Persist into SQLite using Module 4
-        inserted, skipped = insert_tickets(cleaned_df, source_name=uploaded_file.filename)
 
         return jsonify({
             "status": "success",
-            "message": f"Successfully processed '{uploaded_file.filename}'.",
-            "ingestion": {
-                "records_received": ingestion_res.record_count,
-                "columns_found": ingestion_res.columns_found,
-                "warnings": ingestion_res.warnings,
-            },
-            "data_quality": dq_report.to_dict(),
-            "database": {
-                "records_inserted": inserted,
-                "records_skipped_duplicate": skipped,
-                "total_in_db": get_ticket_count()
-            }
+            "message": res["message"],
+            "ingestion": res["ingestion"],
+            "data_quality": res["data_quality"],
+            "database": res["database"],
+            "updated_kpis": res.get("updated_kpis")
         }), 200
 
     except Exception as e:
@@ -199,30 +188,25 @@ def ingest_api():
     """Fetches tickets from the REST API endpoint and routes through the pipeline."""
     try:
         payload = request.get_json(silent=True) or {}
-        api_url = payload.get("api_url", os.getenv("MOCK_API_URL", "http://127.0.0.1:8000/api/v1/tickets"))
-        api_key = payload.get("api_key", os.getenv("MOCK_API_KEY", "capstone-demo-key-2026"))
+        api_url = payload.get("api_url")
+        api_key = payload.get("api_key")
 
-        result = ingest_api_pipeline(api_url=api_url, api_key=api_key)
-
-        if not result["success"]:
+        res = run_api_pipeline(api_url=api_url, api_key=api_key)
+        if not res["success"]:
             return jsonify({
                 "status": "error",
-                "message": result["error"],
-                "stage_failed": result["stage_failed"]
+                "message": res.get("message", "API Ingestion failed."),
+                "stage_failed": res.get("stage_failed", "api_retrieval")
             }), 400
 
-        dq = result["dq_report"]
         return jsonify({
             "status": "success",
-            "message": "API ingestion pipeline completed successfully.",
-            "source_type": result["api_result"].source_type,
-            "records_fetched": result["api_result"].record_count,
-            "data_quality": dq.to_dict() if dq else {},
-            "database": {
-                "records_inserted": result["inserted_count"],
-                "records_skipped_duplicate": result["skipped_count"],
-                "total_in_db": get_ticket_count()
-            }
+            "message": res["message"],
+            "source_type": res.get("source_type"),
+            "records_fetched": res.get("records_fetched"),
+            "data_quality": res.get("data_quality"),
+            "database": res.get("database"),
+            "updated_kpis": res.get("updated_kpis")
         }), 200
 
     except Exception as e:
