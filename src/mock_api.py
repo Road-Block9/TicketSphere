@@ -172,12 +172,14 @@ def get_tickets(
     }
 
 
-def run_mock_server(host: str = "127.0.0.1", port: int = 8000):
-    """Runs the FastAPI server using Uvicorn."""
+def run_mock_server(host: Optional[str] = None, port: Optional[int] = None):
+    """Runs the FastAPI server using Uvicorn with configurable host and port."""
     import uvicorn
-    print(f"Starting Mock Support Ticket REST API at http://{host}:{port}")
-    print(f"Swagger Documentation available at http://{host}:{port}/docs")
-    uvicorn.run(app, host=host, port=port, log_level="info")
+    resolved_host = host or os.getenv("MOCK_API_HOST", "127.0.0.1")
+    resolved_port = port or int(os.getenv("MOCK_API_PORT", "8000"))
+    print(f"Starting Mock Support Ticket REST API at http://{resolved_host}:{resolved_port}")
+    print(f"Swagger Documentation available at http://{resolved_host}:{resolved_port}/docs")
+    uvicorn.run(app, host=resolved_host, port=resolved_port, log_level="info")
 
 
 if __name__ == "__main__":

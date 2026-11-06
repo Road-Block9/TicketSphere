@@ -109,3 +109,36 @@ def test_flask_analytics_kpis_filtered(client):
     # Returned metrics should reflect filtered subset
     assert isinstance(kpis["category_distribution"], list)
 
+
+def test_flask_csv_upload_sample_dataset(client):
+    """Verifies that uploading the official customer_support_tickets.csv processes cleanly."""
+    with open("data/raw/customer_support_tickets.csv", "rb") as f:
+        file_bytes = f.read()
+
+    data = {
+        "file": (io.BytesIO(file_bytes), "customer_support_tickets.csv")
+    }
+    response = client.post("/api/ingest/csv", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+    res_data = response.get_json()
+    assert res_data["status"] == "success"
+    assert res_data["ingestion"]["records_received"] == 60
+    assert "database" in res_data
+
+
+def test_flask_csv_upload_validation_error_details(client):
+    """Verifies that validation failures include structured errors list in the JSON response."""
+    # CSV missing required columns
+    bad_csv = b"subject,description\nBroken ticket,No category or status\n"
+    data = {
+        "file": (io.BytesIO(bad_csv), "invalid_tickets.csv")
+    }
+    response = client.post("/api/ingest/csv", data=data, content_type="multipart/form-data")
+    assert response.status_code == 400
+    res_data = response.get_json()
+    assert res_data["status"] == "error"
+    assert res_data["message"] == "CSV Ingestion validation failed."
+    assert "errors" in res_data
+    assert len(res_data["errors"]) > 0
+    assert any("ticket_id" in err for err in res_data["errors"])
+

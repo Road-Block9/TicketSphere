@@ -120,6 +120,20 @@ class DataQualityReport:
         }
 
 
+def parse_datetime_series(series: Any) -> pd.Series:
+    """
+    Safely parse datetime series to UTC and strip timezone awareness to avoid
+    'TypeError: Invalid comparison between dtype=datetime64[ns] and DatetimeArray'
+    or tz-aware vs tz-naive comparison issues.
+    All returned series have uniform dtype datetime64[ns] (tz-naive, UTC aligned).
+    Invalid or unparseable values become pd.NaT.
+    """
+    if series is None:
+        return pd.Series(pd.NaT, dtype="datetime64[ns]")
+    parsed = pd.to_datetime(series, format="mixed", errors="coerce", utc=True)
+    return parsed.dt.tz_localize(None).astype("datetime64[ns]")
+
+
 def clean_and_transform_tickets(
     df_raw: pd.DataFrame
 ) -> Tuple[pd.DataFrame, DataQualityReport]:
@@ -165,7 +179,7 @@ def clean_and_transform_tickets(
 
     # Step 4: Validate and Standardise Created Timestamp
     # created_at is mandatory for time-series analytics
-    df["created_at_dt"] = pd.to_datetime(df["created_at"], errors="coerce")
+    df["created_at_dt"] = parse_datetime_series(df["created_at"])
     invalid_created_mask = df["created_at_dt"].isna()
     if invalid_created_mask.any():
         unparseable_count = int(invalid_created_mask.sum())
@@ -225,13 +239,32 @@ def clean_and_transform_tickets(
 
     # Step 8: Parse and Validate Resolved Timestamp
     if "resolved_at" in df.columns:
-        df["resolved_at_dt"] = pd.to_datetime(df["resolved_at"], errors="coerce")
+        df["resolved_at_dt"] = parse_datetime_series(df["resolved_at"])
     else:
-        df["resolved_at_dt"] = pd.NaT
+        df["resolved_at_dt"] = pd.Series(pd.NaT, index=df.index, dtype="datetime64[ns]")
+
+    # Check unresolved mask (Open / Pending tickets)
+    unresolved_mask = df["status"].isin(["Open", "Pending"])
+
+    # If resolved_at timestamp was not provided, but resolution duration in minutes is present
+    # (common in datasets like ExploreMyData support-tickets-100.csv):
+    if "resolution_min" in df.columns:
+        res_min_numeric = pd.to_numeric(df["resolution_min"], errors="coerce")
+        # For tickets that are resolved/closed, missing resolved_at_dt, and have valid non-negative resolution_min:
+        can_derive_resolved = (
+            (~unresolved_mask) &
+            df["resolved_at_dt"].isna() &
+            res_min_numeric.notna() &
+            (res_min_numeric >= 0)
+        )
+        if can_derive_resolved.any():
+            df.loc[can_derive_resolved, "resolved_at_dt"] = (
+                df.loc[can_derive_resolved, "created_at_dt"] +
+                pd.to_timedelta(res_min_numeric[can_derive_resolved], unit="m")
+            )
 
     # Step 9: Calculate Resolution Duration & Enforce Rules
     # Rule A: Unresolved tickets (Open/Pending) MUST NOT have a resolution date or fabricated resolution time
-    unresolved_mask = df["status"].isin(["Open", "Pending"])
     
     # Check if an open/pending ticket had a resolution date populated erroneously
     false_resolution_dates = unresolved_mask & df["resolved_at_dt"].notna()
@@ -323,8 +356,8 @@ def clean_and_transform_tickets(
     # Drop temporary datetime helper columns
     df = df.drop(columns=["created_at_dt", "resolved_at_dt"])
 
-    # Final schema ordering
-    ordered_columns = [
+    # Final schema ordering: Ensure all canonical fields appear first, then preserve additional columns
+    canonical_columns = [
         "ticket_id",
         "customer_id",
         "created_at",
@@ -338,7 +371,8 @@ def clean_and_transform_tickets(
         "resolution_time_hours",
         "is_unresolved"
     ]
-    df_clean = df[ordered_columns].copy()
+    extra_columns = [col for col in df.columns if col not in canonical_columns]
+    df_clean = df[canonical_columns + extra_columns].copy()
 
     # Step 12: Record Final Metrics
     report.accepted = len(df_clean)

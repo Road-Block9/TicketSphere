@@ -36,6 +36,7 @@ class GenAIReportResult:
     model_name: str
     disclaimer: str
     generation_time_seconds: float = 0.0
+    metrics: Optional[Dict[str, Any]] = None
 
 
 def build_grounded_prompt(kpis: Dict[str, Any]) -> str:
@@ -117,26 +118,45 @@ def generate_fallback_report(kpis: Dict[str, Any]) -> GenAIReportResult:
     else:
         slowest_cat, slowest_hours = "None", 0.0
 
+    summary_metrics = {
+        "total_tickets": int(total),
+        "unresolved_tickets": int(unresolved),
+        "unresolved_rate_pct": float(unresolved_pct),
+        "avg_resolution_hours": float(avg_hours),
+        "critical_unresolved_count": int(critical_cnt),
+        "high_unresolved_count": int(high_cnt),
+    }
+
     report_lines = [
-        "> **[NOTICE] Deterministic Analytical Fallback Mode**  ",
-        "> *This report was generated deterministically from verified SQL metrics using the built-in analytics template engine. No external GenAI API key was configured or the remote API was unreachable. All figures reflect verified database facts.*",
+        "> **Deterministic Analytical Fallback Mode:** Grounded strictly in verified SQLite query results (no external GenAI API key configured).",
         "",
-        "## Executive Support Insights Management Report",
+        "# Executive Support Insights Management Report",
         "",
-        "### 1. Executive Summary",
+        "## 1. Executive Summary",
         f"The support organization has received **{total} customer tickets** to date. Currently, **{unresolved} tickets remain unresolved** representing a **{unresolved_pct}% backlog rate** across all operations. The fleet-wide average ticket resolution time is **{avg_hours} hours**.",
         "",
-        "### 2. Major Complaint Domains & Backlog Hotspots",
-        f"- **Primary Inbound Category:** **{top_cat}** represents the single largest complaint category with **{top_cat_cnt} tickets ({top_cat_pct}%)** of all customer inquiries.",
-        f"- **Primary Backlog Bottleneck:** **{worst_unres}** carries the highest unresolved volume with **{worst_unres_cnt} open/pending tickets**, constituting an alarming **{worst_unres_pct}% unresolved rate** for that category.",
+        "## 2. Major Complaint Domains & Backlog Hotspots",
+    ]
+
+    if worst_unres == top_cat and top_cat != "None":
+        report_lines.append(
+            f"- **Primary Inbound & Backlog Hotspot:** **{top_cat}** represents both the largest complaint category with **{top_cat_cnt} tickets ({top_cat_pct}%)** and the highest unresolved volume with **{worst_unres_cnt} open/pending tickets** ({worst_unres_pct}% backlog rate)."
+        )
+    else:
+        report_lines.extend([
+            f"- **Primary Inbound Category:** **{top_cat}** represents the single largest complaint category with **{top_cat_cnt} tickets ({top_cat_pct}%)** of all customer inquiries.",
+            f"- **Primary Backlog Bottleneck:** **{worst_unres}** carries the highest unresolved volume with **{worst_unres_cnt} open/pending tickets**, constituting an alarming **{worst_unres_pct}% unresolved rate** for that category.",
+        ])
+
+    report_lines.extend([
         "",
-        "### 3. Resolution Performance & SLA Analysis",
+        "## 3. Resolution Performance & SLA Analysis",
         f"- **Overall Mean Resolution:** Resolved issues take an average of **{avg_hours} hours** from creation to closure.",
         f"- **Slowest Resolution Domain:** **{slowest_cat}** tickets require the longest turnaround at an average of **{slowest_hours} hours**.",
         "",
-        "### 4. Immediate Critical Attention Items",
+        "## 4. Immediate Critical Attention Items",
         f"There are currently **{critical_cnt} Critical** and **{high_cnt} High** priority tickets awaiting resolution in the backlog.",
-    ]
+    ])
 
     urgent_df = kpis.get("management_attention_tickets", None)
     if urgent_df is not None and not urgent_df.empty:
@@ -144,13 +164,24 @@ def generate_fallback_report(kpis: Dict[str, Any]) -> GenAIReportResult:
         for _, row in urgent_df.head(4).iterrows():
             report_lines.append(f"- **[{row['priority']}]** `{row['ticket_id']}` ({row['category']}): {row['subject']}")
 
+    # Grounded operational recommendations directly tied to verified database metrics
+    action_items = [
+        f"1. **Triage Backlog in {worst_unres}:** Reallocate support tier resources to address the {worst_unres_cnt} unresolved tickets in {worst_unres} ({worst_unres_pct}% backlog rate).",
+        f"2. **Streamline Inbound Inquiries for {top_cat}:** Review self-service knowledge base resources and intake routing for {top_cat} to mitigate the highest incoming volume domain ({top_cat_pct}% of inquiries).",
+        f"3. **Investigate SLA Delays in {slowest_cat}:** Review workflow bottlenecks in {slowest_cat} to improve the current {slowest_hours}-hour average turnaround time.",
+    ]
+
+    if critical_cnt > 0:
+        action_items.append(f"4. **Expedite Critical Blockers:** Immediately route the {critical_cnt} critical priority unresolved tickets to senior escalations to meet customer SLAs.")
+    elif high_cnt > 0:
+        action_items.append(f"4. **Address High-Priority Queue:** Prioritize the {high_cnt} high-priority open tickets to prevent backlog aging.")
+    else:
+        action_items.append("4. **Sustain Resolution Cadence:** Maintain current triage standards as zero critical or high-priority tickets are currently blocked.")
+
     report_lines.extend([
         "",
-        "### 5. Recommended Operational Actions",
-        f"1. **Triage Backlog in {worst_unres}:** Dedicate specialized tier-2 resources to clear the {worst_unres_cnt} pending tickets ({worst_unres_pct}% backlog rate).",
-        f"2. **Address Root Cause in {top_cat}:** Conduct a supplier/vendor review for {top_cat} to diminish incoming volume representing {top_cat_pct}% of inquiries.",
-        f"3. **Investigate SLA Delays in {slowest_cat}:** Review workflows in {slowest_cat} to reduce the current {slowest_hours}-hour average turnaround time.",
-        f"4. **Resolve Critical Blockers:** Immediately assign the {critical_cnt} critical unresolved tickets to engineering or senior escalations."
+        "## 5. Recommended Operational Actions",
+        *action_items
     ])
 
     elapsed = round(time.time() - start_time, 3)
@@ -159,7 +190,8 @@ def generate_fallback_report(kpis: Dict[str, Any]) -> GenAIReportResult:
         is_fallback=True,
         model_name="Deterministic Analytical Template Engine",
         disclaimer="Report generated via deterministic template fallback grounded strictly in SQLite query results.",
-        generation_time_seconds=elapsed
+        generation_time_seconds=elapsed,
+        metrics=summary_metrics
     )
 
 
@@ -176,12 +208,22 @@ def generate_support_insights_report(
     if kpis is None:
         kpis = get_all_analytics_kpis(db_path=db_path)
 
+    summary_metrics = {
+        "total_tickets": int(kpis.get("total_tickets", 0)),
+        "unresolved_tickets": int(kpis.get("unresolved_tickets", 0)),
+        "unresolved_rate_pct": float(kpis.get("unresolved_rate_pct", 0.0)),
+        "avg_resolution_hours": float(kpis.get("avg_resolution_hours", 0.0)),
+        "critical_unresolved_count": int(kpis.get("critical_unresolved_count", 0)),
+        "high_unresolved_count": int(kpis.get("high_unresolved_count", 0)),
+    }
+
     if kpis.get("total_tickets", 0) == 0:
         return GenAIReportResult(
             content="### No Ticket Data Available\n\nNo customer support ticket records were found in the database. Please ingest a CSV file or API payload first.",
             is_fallback=True,
             model_name="N/A",
-            disclaimer="No data to analyze."
+            disclaimer="No data to analyze.",
+            metrics=summary_metrics
         )
 
     # Check for Gemini API key
@@ -212,7 +254,8 @@ def generate_support_insights_report(
             is_fallback=False,
             model_name=f"Google Gemini ({model_id})",
             disclaimer=f"AI analysis generated by {model_id} strictly grounded in SQLite analytics.",
-            generation_time_seconds=elapsed
+            generation_time_seconds=elapsed,
+            metrics=summary_metrics
         )
 
     except Exception as e:

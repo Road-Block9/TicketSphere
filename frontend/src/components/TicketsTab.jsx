@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Search,
   Filter,
@@ -26,6 +26,19 @@ export default function TicketsTab({ refreshTrigger }) {
   const [category, setCategory] = useState("");
   const [priority, setPriority] = useState("");
   const [expandedTicketId, setExpandedTicketId] = useState(null);
+
+  // Available categories derived dynamically from fetched tickets or fallback
+  const availableCategories = useMemo(() => {
+    const fromTickets = Array.from(new Set(tickets.map((t) => t.category).filter(Boolean)));
+    const canonical = [
+      "Billing & Refunds",
+      "Customer Service",
+      "Delivery & Shipping",
+      "Product Quality",
+      "Technical Support",
+    ];
+    return Array.from(new Set([...canonical, ...fromTickets])).sort();
+  }, [tickets]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -134,14 +147,14 @@ export default function TicketsTab({ refreshTrigger }) {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 capitalize"
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
             <option value="">All Categories</option>
-            <option value="billing">Billing</option>
-            <option value="technical">Technical</option>
-            <option value="delivery">Delivery</option>
-            <option value="product">Product</option>
-            <option value="service">Service</option>
+            {availableCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
 
           {/* Priority Filter */}

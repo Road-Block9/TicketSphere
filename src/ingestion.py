@@ -13,6 +13,7 @@ Handles ingestion of raw customer support ticket CSV data:
 
 import os
 import io
+import re
 from pathlib import Path
 from typing import Union, List, Dict, Any, Optional
 from dataclasses import dataclass, field
@@ -22,23 +23,96 @@ import pandas as pd
 # Core columns required for the pipeline to generate meaningful SQL analytics
 REQUIRED_COLUMNS = ["ticket_id", "created_at", "status", "category"]
 
-# Known column aliases across different CRM export schemas (Zendesk, Salesforce, Freshdesk)
+# Known column aliases across different CRM export schemas (Zendesk, Salesforce, Freshdesk, ExploreMyData, HowToCSV)
 COLUMN_ALIASES: Dict[str, str] = {
-    "ticket id": "ticket_id",
+    # ticket_id aliases
+    "ticket_id": "ticket_id",
     "ticketid": "ticket_id",
     "id": "ticket_id",
-    "customer id": "customer_id",
-    "customerid": "customer_id",
-    "created date": "created_at",
+    "ticket_number": "ticket_id",
+    "ticket_no": "ticket_id",
+    "ticket_num": "ticket_id",
+    "case_id": "ticket_id",
+    "case_number": "ticket_id",
+    "issue_id": "ticket_id",
+
+    # created_at aliases
+    "created_at": "created_at",
     "created_date": "created_at",
     "creation_date": "created_at",
-    "resolved date": "resolved_at",
+    "date_created": "created_at",
+    "created": "created_at",
+    "open_date": "created_at",
+    "opened_at": "created_at",
+    "ticket_date": "created_at",
+    "date": "created_at",
+    "timestamp": "created_at",
+
+    # resolved_at aliases
+    "resolved_at": "resolved_at",
     "resolved_date": "resolved_at",
+    "resolution_date": "resolved_at",
+    "resolution_time": "resolved_at",
+    "time_to_resolution": "resolved_at",
     "closed_at": "resolved_at",
+    "closed_date": "resolved_at",
+    "date_resolved": "resolved_at",
+    "resolved": "resolved_at",
+
+    # status aliases
+    "status": "status",
+    "ticket_status": "status",
     "state": "status",
+    "case_status": "status",
+    "issue_status": "status",
+    "current_status": "status",
+
+    # category aliases
+    "category": "category",
+    "ticket_category": "category",
+    "ticket_type": "category",
     "issue_type": "category",
     "type": "category",
+    "complaint_category": "category",
+    "issue_category": "category",
+    "case_type": "category",
+
+    # priority aliases
+    "priority": "priority",
+    "ticket_priority": "priority",
     "urgency": "priority",
+    "severity": "priority",
+    "priority_level": "priority",
+
+    # customer_id aliases
+    "customer_id": "customer_id",
+    "customerid": "customer_id",
+    "client_id": "customer_id",
+    "user_id": "customer_id",
+    "account_id": "customer_id",
+    "requester_id": "customer_id",
+
+    # subject aliases
+    "subject": "subject",
+    "ticket_subject": "subject",
+    "title": "subject",
+    "issue_title": "subject",
+    "summary": "subject",
+
+    # description aliases
+    "description": "description",
+    "ticket_description": "description",
+    "details": "description",
+    "issue_description": "description",
+    "notes": "description",
+    "body": "description",
+
+    # resolution_notes aliases
+    "resolution_notes": "resolution_notes",
+    "resolution": "resolution_notes",
+    "solution": "resolution_notes",
+    "closing_notes": "resolution_notes",
+    "resolution_comment": "resolution_notes",
 }
 
 
@@ -78,13 +152,20 @@ class IngestionResult:
 
 
 def normalize_column_name(col: str) -> str:
-    """Normalizes a raw column header to lowercase snake_case and resolves known aliases."""
-    clean = str(col).strip().lower().replace(" ", "_").replace("-", "_")
+    """
+    Normalizes a raw column header to lowercase snake_case and resolves known aliases:
+    - Strips UTF-8 BOM, surrounding quotes, and whitespace.
+    - Replaces consecutive spaces, hyphens, dots, and slashes with an underscore.
+    - Resolves known CRM/helpdesk aliases into canonical names.
+    """
+    raw = str(col).strip().lstrip("\ufeff").strip("\"' ")
+    clean = re.sub(r"[\s\-\./]+", "_", raw.lower())
+    clean = re.sub(r"[^\w]", "", clean).strip("_")
     return COLUMN_ALIASES.get(clean, clean)
 
 
 def read_csv_tickets(
-    file_source: Union[str, Path, io.BytesIO, io.StringIO],
+    file_source: Union[str, Path, io.BytesIO, io.StringIO, Any],
     encoding: str = "utf-8"
 ) -> IngestionResult:
     """
@@ -116,18 +197,31 @@ def read_csv_tickets(
             errors.append(f"Failed to access file '{path_obj}': {str(e)}")
             return IngestionResult(success=False, errors=errors)
 
-    # 2. Validate Buffer Size (for Streamlit UploadedFile / BytesIO / StringIO)
+    # 2. Validate Buffer Size (for Streamlit UploadedFile / BytesIO / StringIO / FileStorage)
     elif hasattr(file_source, "size") and getattr(file_source, "size") == 0:
+        errors.append("Uploaded file buffer is empty (0 bytes).")
+        return IngestionResult(success=False, errors=errors)
+    elif hasattr(file_source, "content_length") and getattr(file_source, "content_length") == 0:
         errors.append("Uploaded file buffer is empty (0 bytes).")
         return IngestionResult(success=False, errors=errors)
 
     # 3. Read CSV into Pandas with error handling
     try:
-        # If buffer, seek to beginning
+        # If wrapped stream or FileStorage, ensure seek to beginning
+        if hasattr(file_source, "stream") and hasattr(file_source.stream, "seek"):
+            try:
+                file_source.stream.seek(0)
+            except Exception:
+                pass
         if hasattr(file_source, "seek"):
-            file_source.seek(0)
+            try:
+                file_source.seek(0)
+            except Exception:
+                pass
 
-        df_raw = pd.read_csv(file_source, encoding=encoding)
+        # Use utf-8-sig to automatically handle standard utf-8 and optional BOM headers
+        effective_encoding = "utf-8-sig" if encoding.lower() in ("utf-8", "utf8", "utf-8-sig") else encoding
+        df_raw = pd.read_csv(file_source, encoding=effective_encoding)
 
     except pd.errors.EmptyDataError:
         errors.append("File contains no data or empty header line.")

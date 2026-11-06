@@ -184,6 +184,10 @@ Companies receive large volumes of customer support tickets across categories (d
 - **2026-10-31:** Completed KPI Card Color Styling Update in `frontend/src/components/OverviewTab.jsx`. Applied reference pastel palette in light mode: Card 1 (`#D6EBFF` soft sky blue), Card 2 (`#EBD5FF` soft lavender), Card 3 (`#FFF0BF` pale warm yellow), Card 4 (`#FFE0D2` soft peach), and Card 5 cycling back to `#D6EBFF`. Configured dark mode styling using restrained charcoal surfaces (`#131b26`, `#1a1528`, `#201c14`, `#221714`) with subtle colored borders and complementary icon badges. Maintained WCAG AAA contrast with dark text (`text-slate-900`/`text-slate-700`) on light pastel backgrounds and `dark:text-white`/`dark:text-slate-300` on dark surfaces. Verified zero regressions via `npm run build` (1.29s) and full Pytest suite (78/78 passing).
 - **2026-10-31:** Refined Dark Mode Color Theme (Obsidian / Neutral Zinc Charcoal). Replaced the cool bluish slate/navy undertone across the entire dashboard with a modern, neutral Obsidian/Zinc palette (`zinc-950`: `#09090b` for canvas, `zinc-900`: `#18181b` for surfaces, `zinc-800`: `#27272a` for borders and inner containers). Removed all bluish dark backgrounds (`#131b26`, `dark:border-blue-900/40`, `dark:bg-indigo-950`) across KPI cards, Sidebar active items, Overview filter badge, Ingestion action buttons, and Ticket table rows. Light mode pastels preserved completely. Verified via `npm run build` (1.38s) and Pytest suite (78/78 passing).
 - **2026-10-31:** Improved Dark-Mode KPI Card Colors in `frontend/src/components/OverviewTab.jsx`. Implemented distinct, soft tinted dark-mode surfaces matching the light-theme pastel identity: Total Tickets (`#292F38` background, `#3B4654` border, `#91BFFF` sky blue icon accent), Unresolved Backlog (`#302A38` background, `#493B54` border, `#C5A0F5` lavender icon accent), Unresolved Rate (`#353025` background, `#51452F` border, `#F0C36D` warm amber icon accent), Average Resolution (`#382A27` background, `#543B35` border, `#F29A80` soft coral icon accent), and Critical & High Alert (`#292F38` background, `#3B4654` border, `#91BFFF` icon accent). Maintained bright readable white metrics (`dark:text-white`), legible muted labels (`dark:text-slate-200`), and light-mode pastels 100% intact. Verified via `npm run build` (1.34s) and full Pytest suite (78/78 passing).
+- **2026-11-01:** Debugged and Resolved Ingestion Pipeline Failures (CSV & REST API):
+  1. *Failure 1 (CSV Ingestion & Error Masking):* Identified that `frontend/src/api.js` was throwing a generic `new Error(data.message)` on 400 responses, completely discarding the structured `data.errors` and `data.warnings` returned by Flask. Updated `api.js` to extract and attach `data.errors` to the error object, and updated `IngestionTab.jsx` to render a structured bulleted validation details list. In `src/ingestion.py`, enhanced `normalize_column_name` to strip UTF-8 BOM (`\ufeff`), added `content_length` check, ensured multi-layered stream rewind (`seek(0)`), and used `utf-8-sig` encoding to handle BOM files without mutating data. Updated `src/flask_app.py` to rewind streams before processing. Added tests in `tests/test_flask_api.py` validating that `customer_support_tickets.csv` uploads successfully and validation errors include structured error lists (80/80 passing).
+  2. *Failure 2 (REST API Ingestion & Server Independence):* Verified that the REST API Ingestion requires the mock API service (`src/mock_api.py`) to simulate external CRM HTTP endpoints (Module 6). Diagnosed that `mock_api.py` was hardcoding port 8000 and did not respect environment variables `MOCK_API_PORT` and `MOCK_API_HOST`. Updated `src/mock_api.py` and `src/api_client.py` to read `MOCK_API_PORT` and `MOCK_API_HOST` dynamically with `DEFAULT_API_URL`. Updated `IngestionTab.jsx` to dynamically initialize `apiUrl` via `VITE_MOCK_API_URL` and render clear copy-paste startup instructions (`python src/mock_api.py`) when the API service is offline.
+  3. *Verification:* Full test suite now passes with **80/80 tests in 8.5s**, and Vite frontend production build succeeds with 0 errors.
 
 ---
 
@@ -192,21 +196,117 @@ Companies receive large volumes of customer support tickets across categories (d
 
 ---
 
-## 10. Known Limitations and Pending Work
+## 10. CSV Ingestion Pipeline Enhancements & Verification
+- **Flexible Column Handling & Normalization (`src/ingestion.py`):**
+  - Enhanced `normalize_column_name()` to strip UTF-8 BOM (`\ufeff`), surrounding quotes, whitespace, and normalize spaces, hyphens, dots, and slashes to underscores.
+  - Expanded `COLUMN_ALIASES` mapping to safely support common variations across CRM and benchmark datasets (ExploreMyData, HowToCSV, Kaggle, Zendesk, Salesforce):
+    - `ticket_id`: `ticket_id`, `ticketid`, `ticket_number`, `ticket_no`, `ticket_num`, `case_id`, `case_number`, `issue_id`, `id`
+    - `created_at`: `created_at`, `created_date`, `creation_date`, `date_created`, `created`, `open_date`, `opened_at`, `ticket_date`, `date`, `timestamp`
+    - `status`: `status`, `ticket_status`, `state`, `ticket_state`, `stage`
+    - `category`: `category`, `ticket_category`, `ticket_type`, `issue_type`, `type`, `department`, `topic`
+    - `priority`: `priority`, `ticket_priority`, `urgency`, `severity`
+    - `resolved_at`: `resolved_at`, `resolved_date`, `resolution_date`, `resolution_time`, `time_to_resolution`, `closed_at`, `closed_date`, `date_resolved`, `resolved`
+- **Datetime Comparison Resolution (`src/transformation.py`):**
+  - **Root Cause Located:** In `support-tickets-100.csv` (ExploreMyData) and similar datasets, timestamps have ISO8601 UTC indicators (`Z` or timezone offsets). `pd.to_datetime` produces a timezone-aware DatetimeArray (`datetime64[us, UTC]`). However, if `resolved_at` is absent, the column was initialized with `pd.NaT`, which defaults to timezone-naive `datetime64[ns]`. Comparing tz-naive and tz-aware series at `(df["resolved_at_dt"] < df["created_at_dt"])` raised `TypeError: Invalid comparison between dtype=datetime64[ns] and DatetimeArray`.
+  - **Fix:** Implemented `parse_datetime_series(series)`. Parses with `format="mixed"`, `utc=True`, and converts to uniform timezone-naive UTC via `.dt.tz_localize(None).astype("datetime64[ns]")`. Both `created_at_dt` and `resolved_at_dt` are guaranteed to share identical `datetime64[ns]` timezone-naive dtype.
+  - **Resolution Duration from `resolution_min`:** When a dataset provides `resolution_min` rather than a `resolved_at` timestamp, valid non-negative resolution durations are safely derived for closed/resolved tickets (`created_at_dt + pd.to_timedelta(resolution_min, unit="m")`), while strictly maintaining `None`/`NaN` for `Open` and `Pending` tickets.
+- **Preservation of Additional Columns:**
+  - Extra columns present in CSVs (e.g. `channel`, `csat`, `satisfaction`, `first_response_min`, `resolution_min`) are retained in `df_clean` after canonical fields. SQLite batch insertion gracefully extracts only canonical schema columns.
+- **Data Integrity & Validation Errors:**
+  - Missing required fields (such as ticket `created_at` in datasets with only `Date of Purchase`) return clear, strict HTTP 400 validation errors without partial database insertion.
+  - Duplicate ticket IDs and repeated ingestion runs maintain 100% idempotent storage behavior (`records_skipped_duplicate`).
+
+---
+
+## 11. Pipeline, Storage, Analytics & GenAI Audit Findings
+- **1. Ingestion Page State:**
+  - React conditional rendering `{activeTab === "ingestion" && <IngestionTab />}` unmounts the component upon navigating away, resetting transient form states (`selectedFile`, `csvResult`, `csvError`).
+  - This transient reset is standard form hygiene (clears old upload cards so the user has a fresh form when returning).
+  - Resetting this UI state triggers zero backend calls and **never** clears, recreates, or modifies the SQLite database.
+- **2. Database Persistence and Duplicate Prevention:**
+  - Verified on isolated test database: Initial count: 0 -> First upload: 280 inserted -> Simulated backend restart (new connection): count remains 280 -> Repeated upload: 0 inserted, 280 skipped (`records_skipped_duplicate`) -> Genuinely new ticket IDs: exactly 2 new inserted, total 282.
+  - `ticket_id` is the strict `PRIMARY KEY` enforcing uniqueness via atomic parameterised `INSERT OR IGNORE`.
+- **3. Analytics Direct SQL Verification:**
+  - Audited live database (`data/processed/customer_support.db`, 1,350 tickets) comparing direct SQL queries against `get_all_analytics_kpis()`:
+    - Total tickets: SQL = 1350, KPI = 1350 (Match: True)
+    - Unresolved: SQL = 239, KPI = 239 (Match: True)
+    - Backlog %: SQL = 17.70%, KPI = 17.70% (Match: True)
+    - Average Resolution: SQL = 34.92 hours, KPI = 34.92 hours (Match: True)
+    - Critical Unresolved: SQL = 51, KPI = 51 (Match: True)
+    - High Unresolved: SQL = 52, KPI = 52 (Match: True)
+  - **Category Filter Defect Identified & Fixed:**
+    - `TicketsTab.jsx` previously had hardcoded dropdown values like `<option value="billing">Billing</option>` while the database stored canonical `"Billing & Refunds"`. Filtering for `"billing"` yielded 0 results.
+    - Updated `TicketsTab.jsx` and `OverviewTab.jsx` to dynamically derive available categories from actual database metrics (`kpis.category_distribution` and loaded tickets).
+    - Updated `src/flask_app.py` `list_tickets` endpoint to support both exact and substring/alias matching for category filters.
+- **4. GenAI Assistant Grounding & Fallback Audit:**
+  - Tested `.env` configuration: `.env` is unconfigured (`GEMINI_API_KEY` len=0), while `google-genai` SDK is installed in `.venv`.
+  - The exact reason for "Deterministic Analytical Fallback Mode" is that no API key is set in the environment.
+  - The fallback reporter (`generate_fallback_report`) extracts 100% of its data points (`total_tickets`, `unresolved_tickets`, `unresolved_rate_pct`, `avg_resolution_hours`, top categories, and escalation IDs) directly from Module 5 SQL analytics. Zero fabrication or hallucination occurs.
+  - When a valid key is provided, `generate_support_insights_report` passes `build_grounded_prompt` with the same verified metrics digest to `gemini-2.5-flash`.
+- **5. Automated Testing:**
+  - Total test suite now stands at **92/92 passing tests** in `pytest` (including 10 variation and audit tests in `tests/test_csv_variations.py` and 7 GenAI tests in `tests/test_genai.py`).
+
+---
+
+## 12. GenAI Assistant Report Presentation Improvements
+- **Safe Markdown Rendering (`react-markdown` + `remark-gfm`):**
+  - Integrated `react-markdown` (v10.1.0) and `remark-gfm` (v4.0.1) in `GenAITab.jsx`.
+  - Configured custom React element renderers for `h1`, `h2`, `h3`, `p`, `ul`, `ol`, `li`, `strong`, `code`, `blockquote`, `table`, `th`, `td`.
+  - Rendered code-formatted ticket IDs (`TKT-123`) as styled monospace badge pills.
+  - Ensured safe execution: raw HTML tags within model-generated content are never executed as scripts (no `dangerouslySetInnerHTML`).
+  - Added a "View Raw Markdown" / "View Formatted" toggle button so users can inspect raw Markdown syntax if explicitly requested, while defaulting to formatted UI.
+- **Compact Verified KPI Cards:**
+  - Enhanced `/api/ai/report` and `GenAIReportResult` to attach `metrics` payload.
+  - Rendered 4 compact, themed metric cards (Total Received, Unresolved Backlog, Backlog Rate, Mean Resolution Time) above the report body.
+- **Improved Report Variety & Strictly Grounded Recommendations:**
+  - Standardized Markdown hierarchy with `# Executive Support Insights Management Report` as prominent H1.
+  - Replaced repetitive/invented recommendations (such as assuming "supplier reviews") with strictly grounded actions: intake routing for high-volume domains, staff reallocation for backlog bottlenecks, and queue escalation based on verified critical ticket counts.
+  - Tested dynamic figure updates: verified that inserting new tickets immediately updates report metrics.
+
+---
+
+## 13. Enterprise Visual Identity Refinements
+- **TicketSphere Branding in Sidebar (`Sidebar.jsx`):**
+  - Completely removed the icon/symbol before the `TicketSphere` brand name for an ultra-clean, minimalist typographic brand identity.
+  - Removed `truncate` on the subtitle and expanded available horizontal width so the full subtitle `"Customer Support Analytics & GenAI"` is visible and never cut off with an ellipsis.
+  - Streamlined sidebar navigation items and footer status with subtle slate hover and active states, eliminating loud card containers.
+- **Browser Tab & Favicon Refinements (`index.html`, `public/favicon.svg`):**
+  - Simplified browser tab title from `TicketSphere — Customer Support Ticket Analytics & GenAI Assistant` to simply `TicketSphere`.
+  - Replaced default Vite purple lightning symbol (`favicon.svg`) with a clean, professional vector "T" monogram SaaS icon.
+- **Backend Status & Toolbar Controls (`Header.jsx`):**
+  - Replaced oversized neon green "Backend Online" pill badge with a compact, professional status indicator.
+  - Uses a subtle `w-1.5 h-1.5` dot (muted emerald for connected, soft rose for error/disconnected) and concise text ("Connected" / "Disconnected") with slate border and subtle background. Dynamic backend status is preserved.
+  - Standardized toolbar action buttons (Data Refresh and Dark/Light Theme Toggle) to uniform `w-7 h-7` compact buttons with neutral slate borders, consistent hover/focus styling, and clear `aria-label` / `title` attributes.
+- **GenAI Support Insights Assistant Panel (`GenAITab.jsx`):**
+  - Replaced oversized promotional purple gradient banner with a compact, restrained enterprise panel (`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800`).
+  - Removed decorative glowing spark icon; added an understated `AI-assisted` badge.
+  - Reduced description copy to concise, actionable operational text.
+  - Replaced oversized pill button with a solid, professional purple action button (`bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white rounded-lg px-3.5 py-2 text-xs font-medium`).
+  - Preserved all backend analytics grounding, fallback notifications, error handling, Markdown rendering, and verified metric cards.
+- **Verification & Design System Consistency:**
+  - Tested both dark and light modes.
+  - Verified responsive layouts, hover/focus states, and disabled states.
+  - Ran `oxlint` (0 errors) and Vite build (clean production build in 1.37s).
+  - Backend pytest suite: 92 passing tests in 9.65s.
+
+---
+
+## 14. Known Limitations and Pending Work
 - Automated browser testing using Playwright driver encountered sandbox network download restrictions (offline 404); application frontend verified via Vite production build, linter, and live HTTP dev servers (`http://127.0.0.1:5173` and `http://127.0.0.1:5000`).
+- Kaggle ExploreMyData dataset (`customer_support_tickets.csv`) lacks ticket creation dates (only contains customer `Date of Purchase`), and correctly triggers minimum schema validation errors.
 - Documentation (`README.md`), presentation outline, and final capstone packaging are ready to be completed in Module 12.
 
 ---
 
-## 11. Current State and Exact Next Step
-- **Current State:** All core modules (1 to 11), KPI card styling, and improved dark-mode tinted KPI card colors are completed, verified, and passing 78 automated Pytest tests, with zero linter errors and zero build errors.
+## 15. Current State and Exact Next Step
+- **Current State:** Visual identity refined to enterprise SaaS standard. All branding, status badges, toolbar buttons, and GenAI panels are restrained, understated, and functional across dark and light themes. 92 automated Pytest tests passing, 0 linter errors, 0 build errors.
 - **Exact Next Step:** Proceed to Module 12 wrap-up documentation:
   1. Write comprehensive `README.md` with system architecture diagrams, tech stack breakdown, setup instructions, and capstone requirements mapping.
   2. Finalize presentation outline and evaluation talking points.
 
 ---
 
-## 12. Instructions for the Next AI Assistant
+## 16. Instructions for the Next AI Assistant
 If resuming or taking over:
 - Read `CONTEXT.md` first to confirm current progress and decisions.
 - Verify status against actual files in `d:\A Capstone`.

@@ -31,7 +31,7 @@ from src.database import (
     get_db_path,
 )
 from src.analytics import get_all_analytics_kpis
-from src.api_client import ingest_api_pipeline
+from src.api_client import ingest_api_pipeline, DEFAULT_API_URL, DEFAULT_API_KEY
 from src.genai_assistant import generate_support_insights_report, GenAIReportResult
 
 
@@ -120,8 +120,8 @@ def run_api_pipeline(
     """
     init_db(db_path)
 
-    default_url = os.getenv("MOCK_API_URL", "http://127.0.0.1:8000/api/v1/tickets")
-    default_key = os.getenv("MOCK_API_KEY", "capstone-demo-key-2026")
+    default_url = DEFAULT_API_URL
+    default_key = DEFAULT_API_KEY
 
     target_url = api_url if api_url and api_url.strip() else default_url
     target_key = api_key if api_key and api_key.strip() else default_key

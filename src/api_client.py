@@ -29,7 +29,9 @@ load_dotenv(PROJECT_ROOT / ".env")
 from src.transformation import clean_and_transform_tickets, DataQualityReport
 from src.database import insert_tickets, init_db, get_db_path
 
-DEFAULT_API_URL = os.getenv("MOCK_API_URL", "http://127.0.0.1:8000/api/v1/tickets")
+MOCK_API_HOST = os.getenv("MOCK_API_HOST", "127.0.0.1")
+MOCK_API_PORT = os.getenv("MOCK_API_PORT", "8000")
+DEFAULT_API_URL = os.getenv("MOCK_API_URL", f"http://{MOCK_API_HOST}:{MOCK_API_PORT}/api/v1/tickets")
 DEFAULT_API_KEY = os.getenv("MOCK_API_KEY", "capstone-demo-key-2026")
 
 

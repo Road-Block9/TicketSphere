@@ -12,8 +12,15 @@ async function request(endpoint, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const errorMsg = data.message || `Request failed with status ${response.status}`;
-      throw new Error(errorMsg);
+      const errorDetail =
+        Array.isArray(data.errors) && data.errors.length > 0
+          ? `${data.message || "Request failed"}: ${data.errors.join("; ")}`
+          : data.message || `Request failed with status ${response.status}`;
+      const err = new Error(errorDetail);
+      err.errors = data.errors || [];
+      err.warnings = data.warnings || [];
+      err.data = data;
+      throw err;
     }
     return data;
   } catch (err) {
@@ -72,7 +79,15 @@ export const api = {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.message || `Upload failed with status ${response.status}`);
+        const errorDetail =
+          Array.isArray(data.errors) && data.errors.length > 0
+            ? `${data.message || "Upload failed"}: ${data.errors.join("; ")}`
+            : data.message || `Upload failed with status ${response.status}`;
+        const err = new Error(errorDetail);
+        err.errors = data.errors || [];
+        err.warnings = data.warnings || [];
+        err.data = data;
+        throw err;
       }
       return data;
     } catch (err) {

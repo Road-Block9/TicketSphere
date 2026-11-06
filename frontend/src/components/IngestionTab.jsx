@@ -16,9 +16,12 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
   const [csvLoading, setCsvLoading] = useState(false);
   const [csvResult, setCsvResult] = useState(null);
   const [csvError, setCsvError] = useState(null);
+  const [csvErrorDetails, setCsvErrorDetails] = useState([]);
 
-  // API Ingestion state
-  const [apiUrl, setApiUrl] = useState("http://127.0.0.1:8000/api/v1/tickets");
+  // API Ingestion state (dynamically configurable via env or default)
+  const defaultMockUrl =
+    import.meta.env.VITE_MOCK_API_URL || "http://127.0.0.1:8000/api/v1/tickets";
+  const [apiUrl, setApiUrl] = useState(defaultMockUrl);
   const [apiKey, setApiKey] = useState("capstone-demo-key-2026");
   const [apiLoading, setApiLoading] = useState(false);
   const [apiResult, setApiResult] = useState(null);
@@ -29,6 +32,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
       setSelectedFile(e.target.files[0]);
       setCsvResult(null);
       setCsvError(null);
+      setCsvErrorDetails([]);
     }
   };
 
@@ -38,6 +42,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
 
     setCsvLoading(true);
     setCsvError(null);
+    setCsvErrorDetails([]);
     setCsvResult(null);
 
     try {
@@ -46,6 +51,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
       if (onIngestionComplete) onIngestionComplete();
     } catch (err) {
       setCsvError(err.message || "Failed to process CSV file.");
+      setCsvErrorDetails(err.errors || []);
     } finally {
       setCsvLoading(false);
     }
@@ -134,9 +140,21 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
               </div>
 
               {csvError && (
-                <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start space-x-2 text-xs text-rose-700 dark:text-rose-300">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{csvError}</span>
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 space-y-2">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                    <span className="font-semibold">{csvError}</span>
+                  </div>
+                  {csvErrorDetails && csvErrorDetails.length > 0 && (
+                    <div className="pl-6 pt-1 border-t border-rose-200/60 dark:border-rose-900/40">
+                      <p className="font-medium text-[11px] text-rose-800 dark:text-rose-200 mb-1">Validation Details:</p>
+                      <ul className="list-disc space-y-1 text-[11px] text-rose-600 dark:text-rose-400">
+                        {csvErrorDetails.map((detail, idx) => (
+                          <li key={idx}>{detail}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -261,9 +279,25 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
               </div>
 
               {apiError && (
-                <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start space-x-2 text-xs text-rose-700 dark:text-rose-300">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{apiError}</span>
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 space-y-2.5">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                    <span className="font-semibold">{apiError}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-rose-100/70 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/50 space-y-1 text-[11px]">
+                    <span className="font-semibold text-rose-800 dark:text-rose-200 block">
+                      Mock API Startup Instructions:
+                    </span>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      The REST API server runs independently from Flask. To start it, run in your terminal:
+                    </p>
+                    <code className="block mt-1 px-2 py-1 rounded bg-slate-900 text-emerald-400 font-mono text-[11px]">
+                      python src/mock_api.py
+                    </code>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                      (Configurable via MOCK_API_PORT and MOCK_API_HOST environment variables)
+                    </p>
+                  </div>
                 </div>
               )}
 

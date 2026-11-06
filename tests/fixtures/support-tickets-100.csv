@@ -1,0 +1,101 @@
+ticket_id,created_at,customer_id,channel,priority,category,first_response_min,resolution_min,status,satisfaction
+TCK-000001,2025-07-01T00:00:00Z,1175,Chat,Urgent,Data import,3,412,closed,
+TCK-000002,2025-07-04T15:36:00Z,1019,Social,High,Data import,34,507,resolved,
+TCK-000003,2025-07-08T07:12:00Z,1278,Chat,Urgent,Performance,8,305,closed,
+TCK-000004,2025-07-11T22:48:00Z,1448,Web form,Normal,Billing,65,,open,
+TCK-000005,2025-07-15T14:24:00Z,1936,Email,Low,Feature request,431,3785,closed,4
+TCK-000006,2025-07-19T06:00:00Z,1471,Social,Low,Feature request,302,1808,closed,1
+TCK-000007,2025-07-22T21:36:00Z,1949,Web form,Low,Performance,206,2717,closed,1
+TCK-000008,2025-07-26T13:12:00Z,1968,Chat,Normal,Billing,85,771,closed,
+TCK-000009,2025-07-30T04:48:00Z,1750,Chat,Normal,Integration,32,,pending,
+TCK-000010,2025-08-02T20:24:00Z,1591,Phone,Normal,Integration,63,1975,closed,2
+TCK-000011,2025-08-06T12:00:00Z,1908,Chat,High,Data import,21,174,resolved,1
+TCK-000012,2025-08-10T03:36:00Z,1982,Social,Low,Performance,343,6881,closed,
+TCK-000013,2025-08-13T19:12:00Z,1099,Web form,Low,Bug report,442,6637,closed,1
+TCK-000014,2025-08-17T10:48:00Z,1055,Web form,Urgent,Feature request,10,406,closed,
+TCK-000015,2025-08-21T02:24:00Z,1214,Phone,Low,Export,122,2695,resolved,3
+TCK-000016,2025-08-24T18:00:00Z,1730,Web form,Urgent,Integration,3,173,closed,2
+TCK-000017,2025-08-28T09:36:00Z,1469,Phone,Low,Account,337,6240,closed,
+TCK-000018,2025-09-01T01:12:00Z,1802,Email,Normal,Export,157,,pending,
+TCK-000019,2025-09-04T16:48:00Z,1538,Social,Normal,Account,166,1810,resolved,
+TCK-000020,2025-09-08T08:24:00Z,1295,Web form,Urgent,Login,3,123,resolved,4
+TCK-000021,2025-09-12T00:00:00Z,1646,Web form,High,Data import,15,,open,
+TCK-000022,2025-09-15T15:36:00Z,1880,Social,Normal,Login,46,,open,
+TCK-000023,2025-09-19T07:12:00Z,1808,Web form,Low,Performance,217,6190,closed,
+TCK-000024,2025-09-22T22:48:00Z,1887,Social,Low,Integration,263,7047,closed,
+TCK-000025,2025-09-26T14:24:00Z,1909,Phone,Low,Performance,446,,open,
+TCK-000026,2025-09-30T06:00:00Z,1950,Chat,Low,Account,165,,open,
+TCK-000027,2025-10-03T21:36:00Z,1028,Phone,Normal,Export,123,792,resolved,2
+TCK-000028,2025-10-07T13:12:00Z,1035,Web form,High,Feature request,24,235,closed,4
+TCK-000029,2025-10-11T04:48:00Z,1426,Chat,Low,Feature request,405,4942,closed,3
+TCK-000030,2025-10-14T20:24:00Z,1908,Phone,Low,Account,432,2314,closed,3
+TCK-000031,2025-10-18T12:00:00Z,1540,Web form,Normal,Billing,90,,open,
+TCK-000032,2025-10-22T03:36:00Z,1059,Web form,Urgent,Bug report,2,221,closed,4
+TCK-000033,2025-10-25T19:12:00Z,1205,Email,Urgent,Data import,9,422,resolved,3
+TCK-000034,2025-10-29T10:48:00Z,1441,Email,Normal,Billing,150,1715,closed,1
+TCK-000035,2025-11-02T02:24:00Z,1403,Chat,Normal,Export,36,3180,resolved,
+TCK-000036,2025-11-05T18:00:00Z,1702,Web form,Low,Integration,233,2898,resolved,
+TCK-000037,2025-11-09T09:36:00Z,1041,Phone,Urgent,Integration,7,427,closed,4
+TCK-000038,2025-11-13T01:12:00Z,1169,Web form,Low,Bug report,335,5407,closed,
+TCK-000039,2025-11-16T16:48:00Z,1116,Web form,Normal,Integration,103,,open,
+TCK-000040,2025-11-20T08:24:00Z,1360,Social,Low,Feature request,148,4350,resolved,3
+TCK-000041,2025-11-24T00:00:00Z,1872,Email,Urgent,Login,11,325,closed,5
+TCK-000042,2025-11-27T15:36:00Z,1524,Web form,Normal,Bug report,177,3585,resolved,4
+TCK-000043,2025-12-01T07:12:00Z,1215,Social,Normal,Export,168,1020,closed,3
+TCK-000044,2025-12-04T22:48:00Z,1627,Web form,Normal,Data import,64,2766,closed,
+TCK-000045,2025-12-08T14:24:00Z,1235,Web form,Normal,Integration,97,2317,closed,3
+TCK-000046,2025-12-12T06:00:00Z,1245,Social,Urgent,Data import,9,,open,
+TCK-000047,2025-12-15T21:36:00Z,1286,Social,Urgent,Feature request,9,272,closed,1
+TCK-000048,2025-12-19T13:12:00Z,1286,Social,High,Account,29,656,closed,
+TCK-000049,2025-12-23T04:48:00Z,1730,Social,Low,Billing,137,7351,closed,3
+TCK-000050,2025-12-26T20:24:00Z,1462,Email,Normal,Data import,84,1972,closed,5
+TCK-000051,2025-12-30T12:00:00Z,1656,Email,Normal,Data import,60,1291,closed,
+TCK-000052,2026-01-03T03:36:00Z,1882,Phone,Normal,Data import,88,,pending,
+TCK-000053,2026-01-06T19:12:00Z,1832,Phone,Urgent,Bug report,11,305,closed,2
+TCK-000054,2026-01-10T10:48:00Z,1691,Social,Normal,Performance,93,2645,closed,4
+TCK-000055,2026-01-14T02:24:00Z,1304,Social,High,Performance,38,332,closed,
+TCK-000056,2026-01-17T18:00:00Z,1014,Web form,High,Login,45,603,closed,
+TCK-000057,2026-01-21T09:36:00Z,1302,Email,Normal,Billing,135,1536,resolved,5
+TCK-000058,2026-01-25T01:12:00Z,1044,Phone,Urgent,Bug report,9,253,closed,
+TCK-000059,2026-01-28T16:48:00Z,1852,Email,Low,Billing,334,7272,resolved,5
+TCK-000060,2026-02-01T08:24:00Z,1272,Email,Low,Feature request,358,8804,resolved,4
+TCK-000061,2026-02-05T00:00:00Z,1510,Chat,Low,Login,83,5306,closed,4
+TCK-000062,2026-02-08T15:36:00Z,1846,Social,Normal,Bug report,92,2405,resolved,4
+TCK-000063,2026-02-12T07:12:00Z,1505,Email,Normal,Login,37,3555,closed,3
+TCK-000064,2026-02-15T22:48:00Z,1163,Web form,Normal,Integration,82,,pending,
+TCK-000065,2026-02-19T14:24:00Z,1467,Social,Normal,Data import,154,953,closed,5
+TCK-000066,2026-02-23T06:00:00Z,1727,Web form,High,Performance,18,517,closed,
+TCK-000067,2026-02-26T21:36:00Z,1656,Social,Normal,Login,146,,open,
+TCK-000068,2026-03-02T13:12:00Z,1142,Web form,Low,Performance,225,4766,resolved,2
+TCK-000069,2026-03-06T04:48:00Z,1767,Social,Normal,Account,127,671,resolved,4
+TCK-000070,2026-03-09T20:24:00Z,1103,Chat,Normal,Integration,150,2818,closed,
+TCK-000071,2026-03-13T12:00:00Z,1188,Chat,Low,Export,98,6022,resolved,2
+TCK-000072,2026-03-17T03:36:00Z,1455,Phone,Urgent,Billing,9,,open,
+TCK-000073,2026-03-20T19:12:00Z,1179,Phone,Normal,Integration,85,3589,closed,
+TCK-000074,2026-03-24T10:48:00Z,1974,Phone,Urgent,Export,7,253,closed,5
+TCK-000075,2026-03-28T02:24:00Z,1401,Web form,Urgent,Performance,8,196,closed,3
+TCK-000076,2026-03-31T18:00:00Z,1780,Social,Normal,Bug report,100,3400,resolved,2
+TCK-000077,2026-04-04T09:36:00Z,1773,Email,Normal,Integration,75,1890,closed,1
+TCK-000078,2026-04-08T01:12:00Z,1827,Chat,Normal,Performance,110,804,closed,
+TCK-000079,2026-04-11T16:48:00Z,1320,Email,Urgent,Bug report,12,,open,
+TCK-000080,2026-04-15T08:24:00Z,1809,Email,Low,Integration,478,7910,closed,1
+TCK-000081,2026-04-19T00:00:00Z,1190,Chat,Low,Account,372,,open,
+TCK-000082,2026-04-22T15:36:00Z,1525,Social,Low,Export,251,8454,resolved,
+TCK-000083,2026-04-26T07:12:00Z,1223,Chat,Normal,Performance,154,2138,closed,5
+TCK-000084,2026-04-29T22:48:00Z,1500,Social,Low,Account,397,4199,resolved,3
+TCK-000085,2026-05-03T14:24:00Z,1134,Web form,Urgent,Bug report,8,,pending,
+TCK-000086,2026-05-07T06:00:00Z,1988,Web form,Urgent,Billing,9,171,closed,
+TCK-000087,2026-05-10T21:36:00Z,1483,Social,Normal,Billing,38,,open,
+TCK-000088,2026-05-14T13:12:00Z,1668,Web form,Low,Feature request,144,,open,
+TCK-000089,2026-05-18T04:48:00Z,1271,Web form,Low,Export,443,4495,closed,
+TCK-000090,2026-05-21T20:24:00Z,1720,Phone,High,Billing,39,1190,closed,2
+TCK-000091,2026-05-25T12:00:00Z,1470,Social,Low,Bug report,363,,pending,
+TCK-000092,2026-05-29T03:36:00Z,1646,Email,Low,Data import,278,2252,closed,3
+TCK-000093,2026-06-01T19:12:00Z,1486,Chat,High,Bug report,28,,pending,
+TCK-000094,2026-06-05T10:48:00Z,1164,Email,Low,Export,182,5584,closed,
+TCK-000095,2026-06-09T02:24:00Z,1946,Web form,High,Billing,42,906,resolved,4
+TCK-000096,2026-06-12T18:00:00Z,1559,Phone,Low,Performance,341,6958,closed,
+TCK-000097,2026-06-16T09:36:00Z,1154,Chat,Normal,Login,76,3668,closed,3
+TCK-000098,2026-06-20T01:12:00Z,1816,Social,High,Integration,34,828,closed,
+TCK-000099,2026-06-23T16:48:00Z,1256,Web form,Normal,Data import,178,1213,resolved,
+TCK-000100,2026-06-27T08:24:00Z,1389,Email,High,Export,25,620,resolved,

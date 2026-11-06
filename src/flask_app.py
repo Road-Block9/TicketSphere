@@ -123,7 +123,11 @@ def list_tickets():
             if status_filter:
                 df = df[df["status"].str.lower() == status_filter.lower()]
             if category_filter:
-                df = df[df["category"].str.lower() == category_filter.lower()]
+                cat_lower = category_filter.lower()
+                df = df[
+                    (df["category"].str.lower() == cat_lower) |
+                    (df["category"].str.lower().str.contains(cat_lower, na=False))
+                ]
             if priority_filter:
                 df = df[df["priority"].str.lower() == priority_filter.lower()]
             if search_query:
@@ -161,7 +165,20 @@ def ingest_csv():
         if uploaded_file.filename == "":
             return jsonify({"status": "error", "message": "No selected file."}), 400
 
-        res = run_csv_pipeline(uploaded_file.stream, source_name=uploaded_file.filename)
+        # Ensure stream is rewound to beginning
+        if hasattr(uploaded_file, "seek"):
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
+        if hasattr(uploaded_file.stream, "seek"):
+            try:
+                uploaded_file.stream.seek(0)
+            except Exception:
+                pass
+
+        db_path = app.config.get("DATABASE_PATH")
+        res = run_csv_pipeline(uploaded_file.stream, source_name=uploaded_file.filename, db_path=db_path)
         if not res["success"]:
             return jsonify({
                 "status": "error",
@@ -224,7 +241,8 @@ def generate_report():
             "is_fallback": report_res.is_fallback,
             "model_name": report_res.model_name,
             "disclaimer": report_res.disclaimer,
-            "generation_time_seconds": report_res.generation_time_seconds
+            "generation_time_seconds": report_res.generation_time_seconds,
+            "metrics": report_res.metrics
         }), 200
 
     except Exception as e:

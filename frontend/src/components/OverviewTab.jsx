@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Inbox,
   Clock,
@@ -139,6 +139,19 @@ export default function OverviewTab({
   const volumeTrends = currentKpis.volume_trends || [];
   const unresolvedByCategory = currentKpis.unresolved_by_category || [];
 
+  // Available categories derived dynamically from category distribution or canonical
+  const availableCategories = useMemo(() => {
+    const fromKpis = (currentKpis.category_distribution || []).map((c) => c.category).filter(Boolean);
+    const canonical = [
+      "Billing & Refunds",
+      "Customer Service",
+      "Delivery & Shipping",
+      "Product Quality",
+      "Technical Support",
+    ];
+    return Array.from(new Set([...canonical, ...fromKpis])).sort();
+  }, [currentKpis.category_distribution]);
+
   if (initialLoading && !kpis) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
@@ -229,11 +242,11 @@ export default function OverviewTab({
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">All Categories</option>
-              <option value="Billing & Refunds">Billing & Refunds</option>
-              <option value="Customer Service">Customer Service</option>
-              <option value="Delivery & Shipping">Delivery & Shipping</option>
-              <option value="Product Quality">Product Quality</option>
-              <option value="Technical Support">Technical Support</option>
+              {availableCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
             </select>
           </div>
 

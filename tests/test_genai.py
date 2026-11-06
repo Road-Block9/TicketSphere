@@ -148,3 +148,81 @@ def test_gemini_api_exception_fallback(sample_kpis):
             assert "Deterministic Analytical" in result.model_name
             assert "50 customer tickets" in result.content
             assert "Fell back automatically" in result.disclaimer
+
+
+def test_report_markdown_presentation_structure(sample_kpis):
+    """
+    Verifies that the generated report content follows clean Markdown presentation standards:
+    - Clear H1 prominent heading
+    - Properly sized H2 section headings
+    - Bold text emphasis (**text**)
+    - Numbered and bulleted lists
+    - Code-formatted ticket IDs (`TKT-123`)
+    - Inclusion of verified metrics payload
+    """
+    result = generate_fallback_report(sample_kpis)
+    content = result.content
+
+    # H1 Prominent Title
+    assert "# Executive Support Insights Management Report" in content
+    # H2 Sections
+    assert "## 1. Executive Summary" in content
+    assert "## 2. Major Complaint Domains & Backlog Hotspots" in content
+    assert "## 3. Resolution Performance & SLA Analysis" in content
+    assert "## 4. Immediate Critical Attention Items" in content
+    assert "## 5. Recommended Operational Actions" in content
+
+    # Bold text formatting
+    assert "**50 customer tickets**" in content
+    assert "**20 tickets remain unresolved**" in content
+    assert "**40.0% backlog rate**" in content
+
+    # Code-formatted ticket ID
+    assert "`TKT-TEST-CRIT`" in content
+
+    # Verified metrics payload attached
+    assert result.metrics is not None
+    assert result.metrics["total_tickets"] == 50
+    assert result.metrics["unresolved_tickets"] == 20
+    assert result.metrics["unresolved_rate_pct"] == 40.0
+    assert result.metrics["avg_resolution_hours"] == 14.33
+
+
+def test_report_figures_update_dynamically_with_database_changes(tmp_path):
+    """
+    Verifies that AI assistant figures dynamically update when the underlying database changes.
+    """
+    from src.database import init_db
+    from src.pipeline import run_csv_pipeline
+    import io
+
+    test_db = tmp_path / "dynamic_ai_test.db"
+    init_db(test_db)
+
+    # Initial batch: 2 tickets
+    csv_batch_1 = (
+        "ticket_id,created_at,status,category,priority,subject,description\n"
+        "TKT-DYN-01,2026-03-01 10:00:00,Open,Billing & Refunds,High,Billing query,Need refund\n"
+        "TKT-DYN-02,2026-03-01 11:00:00,Closed,Technical Support,Medium,Bug,Solved\n"
+    )
+    run_csv_pipeline(io.StringIO(csv_batch_1), db_path=test_db)
+
+    report_1 = generate_support_insights_report(db_path=str(test_db))
+    assert "2 customer tickets" in report_1.content
+    assert report_1.metrics["total_tickets"] == 2
+    assert report_1.metrics["unresolved_tickets"] == 1
+
+    # Second batch: 2 additional tickets
+    csv_batch_2 = (
+        "ticket_id,created_at,status,category,priority,subject,description\n"
+        "TKT-DYN-03,2026-03-01 12:00:00,Open,Delivery & Shipping,Critical,Delayed package,Lost box\n"
+        "TKT-DYN-04,2026-03-01 13:00:00,Resolved,Billing & Refunds,Low,Receipt,Sent\n"
+    )
+    run_csv_pipeline(io.StringIO(csv_batch_2), db_path=test_db)
+
+    report_2 = generate_support_insights_report(db_path=str(test_db))
+    # Figures MUST dynamically update reflecting the new database state
+    assert "4 customer tickets" in report_2.content
+    assert report_2.metrics["total_tickets"] == 4
+    assert report_2.metrics["unresolved_tickets"] == 2
+    assert "`TKT-DYN-03`" in report_2.content
