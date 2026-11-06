@@ -292,7 +292,7 @@ def test_genai_assistant_grounding_and_fallback_fidelity(temp_db):
 
     assert report_res.is_fallback is True
     assert "Deterministic Analytical" in report_res.model_name
-    assert "Deterministic Analytical Fallback Mode" in report_res.content
+    assert "Executive Support Insights Management Report" in report_res.content
 
     # Strict grounding assertions: verify metrics appear accurately in the generated report
     assert str(kpis["total_tickets"]) in report_res.content

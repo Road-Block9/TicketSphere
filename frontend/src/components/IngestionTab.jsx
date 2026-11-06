@@ -7,6 +7,10 @@ import {
   AlertCircle,
   ArrowRight,
   RefreshCw,
+  RotateCcw,
+  AlertTriangle,
+  Trash2,
+  X,
 } from "lucide-react";
 import { api } from "../api";
 
@@ -26,6 +30,12 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
   const [apiLoading, setApiLoading] = useState(false);
   const [apiResult, setApiResult] = useState(null);
   const [apiError, setApiError] = useState(null);
+
+  // Reset Demo Data state
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState(null);
+  const [resetError, setResetError] = useState(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -74,27 +84,87 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
     }
   };
 
+  const handleResetDemoData = async () => {
+    setResetLoading(true);
+    setResetError(null);
+    setResetMessage(null);
+
+    try {
+      const response = await api.resetDemoData();
+      setResetMessage(
+        response.message ||
+          "Demo data successfully reset. The database is restored to a clean baseline."
+      );
+
+      // Clear transient form state & previous results
+      setSelectedFile(null);
+      setCsvResult(null);
+      setCsvError(null);
+      setCsvErrorDetails([]);
+      setApiResult(null);
+      setApiError(null);
+      setShowResetConfirm(false);
+
+      // Refresh dashboard KPIs, charts, and tickets count in parent
+      if (onIngestionComplete) {
+        await onIngestionComplete();
+      }
+    } catch (err) {
+      setResetError(err.message || "Failed to reset demo data.");
+      setShowResetConfirm(false);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-5xl">
       {/* Overview Intro Banner */}
-      <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent p-6 rounded-2xl border border-indigo-200/60 dark:border-indigo-900/40">
-        <div className="flex items-start space-x-4">
-          <div className="p-3 bg-indigo-600 rounded-xl text-white shrink-0 shadow-md shadow-indigo-500/20">
-            <UploadCloud className="w-6 h-6" />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-xl transition-colors duration-200">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <UploadCloud className="w-4 h-4" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              End-to-End Ingestion Pipeline
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-              Files and API records pass through the identical 3-stage pipeline:{" "}
-              <strong>Schema Validation</strong> (Module 2),{" "}
-              <strong>Data Quality Audit & Normalization</strong> (Module 3), and{" "}
-              <strong>Idempotent Storage</strong> (Module 4). Duplicate ticket IDs are automatically skipped to preserve historical record integrity.
-            </p>
-          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            End-to-End Ingestion Pipeline
+          </h3>
         </div>
       </div>
+
+      {/* Reset Notification Banners */}
+      {resetMessage && (
+        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+          <div className="flex items-center space-x-2.5">
+            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span className="font-semibold">{resetMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setResetMessage(null)}
+            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 p-1"
+            title="Dismiss message"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {resetError && (
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300">
+          <div className="flex items-center space-x-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            <span className="font-semibold">{resetError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setResetError(null)}
+            className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200 p-1"
+            title="Dismiss error"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Module 2: CSV File Upload Card */}
@@ -113,7 +183,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
             </div>
 
             <form onSubmit={handleCsvUpload} className="mt-5 space-y-4">
-              <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors">
+              <div className="h-[124px] border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center px-4 py-2 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors">
                 <input
                   type="file"
                   id="csv-file-input"
@@ -123,15 +193,15 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
                 />
                 <label
                   htmlFor="csv-file-input"
-                  className="cursor-pointer flex flex-col items-center space-y-2"
+                  className="cursor-pointer flex flex-col items-center space-y-1"
                 >
-                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-indigo-600 dark:text-indigo-400">
-                    <UploadCloud className="w-6 h-6" />
+                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-indigo-600 dark:text-indigo-400">
+                    <UploadCloud className="w-5 h-5" />
                   </div>
                   <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
                     {selectedFile ? selectedFile.name : "Choose a CSV file"}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-[11px] text-slate-400">
                     {selectedFile
                       ? `${(selectedFile.size / 1024).toFixed(1)} KB`
                       : "Drag & drop or browse from filesystem"}
@@ -146,7 +216,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
                     <span className="font-semibold">{csvError}</span>
                   </div>
                   {csvErrorDetails && csvErrorDetails.length > 0 && (
-                    <div className="pl-6 pt-1 border-t border-rose-200/60 dark:border-rose-900/40">
+                    <div className="pl-6 pt-1.5 border-t border-rose-200/60 dark:border-rose-900/40">
                       <p className="font-medium text-[11px] text-rose-800 dark:text-rose-200 mb-1">Validation Details:</p>
                       <ul className="list-disc space-y-1 text-[11px] text-rose-600 dark:text-rose-400">
                         {csvErrorDetails.map((detail, idx) => (
@@ -161,7 +231,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
               <button
                 type="submit"
                 disabled={!selectedFile || csvLoading}
-                className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all duration-150"
+                className="w-full h-10 flex items-center justify-center space-x-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-150"
               >
                 {csvLoading ? (
                   <>
@@ -279,7 +349,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
               </div>
 
               {apiError && (
-                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 space-y-2.5">
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 space-y-2">
                   <div className="flex items-start space-x-2">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                     <span className="font-semibold">{apiError}</span>
@@ -304,7 +374,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
               <button
                 type="submit"
                 disabled={apiLoading}
-                className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all duration-150"
+                className="w-full h-10 flex items-center justify-center space-x-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all duration-150"
               >
                 {apiLoading ? (
                   <>
@@ -379,6 +449,114 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
           )}
         </div>
       </div>
+
+      {/* Demo Data Management Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200/80 dark:border-rose-900/50 rounded-xl text-rose-600 dark:text-rose-400 shrink-0">
+              <RotateCcw className="w-5 h-5" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <h4 className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">
+                Reset Demo Data
+              </h4>
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                Safe Demo Baseline
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowResetConfirm(true)}
+            disabled={resetLoading}
+            className="shrink-0 self-start sm:self-auto flex items-center space-x-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors duration-150 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+          >
+            {resetLoading ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Resetting...</span>
+              </>
+            ) : (
+              <>
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Demo Data</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Confirmation Dialog Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full p-6 space-y-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-dialog-title"
+          >
+            <div className="flex items-start space-x-3.5">
+              <div className="p-2.5 bg-rose-100 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 rounded-xl text-rose-600 dark:text-rose-400 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3
+                  id="reset-dialog-title"
+                  className="text-base font-bold text-slate-900 dark:text-white"
+                >
+                  Reset Demo Data?
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                  This will remove all previously ingested ticket records and audit logs from SQLite to restore the demo baseline.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-lg p-3 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+              <div className="flex items-center space-x-2 font-semibold text-slate-800 dark:text-slate-200">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                <span>What happens next:</span>
+              </div>
+              <ul className="list-disc pl-5 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <li>SQLite tables, schema, and performance indexes remain intact.</li>
+                <li>Allows re-uploading the same CSV dataset with fresh insertion.</li>
+                <li>Dashboard KPIs, charts, and ticket counts will reflect 0 records.</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                disabled={resetLoading}
+                className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleResetDemoData}
+                disabled={resetLoading}
+                className="flex items-center space-x-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+              >
+                {resetLoading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Resetting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirm Reset</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

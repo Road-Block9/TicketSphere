@@ -43,39 +43,15 @@ export default function Header({
 
   return (
     <header className="h-14 px-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 transition-colors duration-200">
-      {/* Title & Subtitle */}
+      {/* Title */}
       <div className="min-w-0 pr-4">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
           {currentTabInfo.title}
         </h2>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-          {currentTabInfo.subtitle}
-        </p>
       </div>
 
       {/* Action Controls */}
       <div className="flex items-center space-x-2 shrink-0">
-        {/* Compact Backend Connectivity Indicator */}
-        <div
-          className="hidden sm:inline-flex items-center space-x-2 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-slate-700 dark:text-slate-300"
-          title={
-            backendStatus.online
-              ? `Connected to Flask API on :5000 (${backendStatus.ticketCount} tickets in SQLite)`
-              : "Cannot reach Flask API on http://127.0.0.1:5000"
-          }
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              backendStatus.online
-                ? "bg-emerald-500 dark:bg-emerald-400"
-                : "bg-rose-500 dark:bg-rose-400"
-            }`}
-          />
-          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-            {backendStatus.online ? "Connected" : "Disconnected"}
-          </span>
-        </div>
-
         {/* Refresh Data Button */}
         <button
           onClick={onRefresh}

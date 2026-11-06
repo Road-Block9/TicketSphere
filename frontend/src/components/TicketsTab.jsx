@@ -44,8 +44,9 @@ export default function TicketsTab({ refreshTrigger }) {
     setLoading(true);
     setError(null);
     try {
+      const cleanSearch = search.trim().replace(/^["'`]|["'`,;]$/g, "");
       const res = await api.getTickets({
-        search: search || undefined,
+        search: cleanSearch || undefined,
         status: status || undefined,
         category: category || undefined,
         priority: priority || undefined,
@@ -60,8 +61,11 @@ export default function TicketsTab({ refreshTrigger }) {
   };
 
   useEffect(() => {
-    fetchTickets();
-  }, [status, category, priority, refreshTrigger]);
+    const timer = setTimeout(() => {
+      fetchTickets();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search, status, category, priority, refreshTrigger]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -110,11 +114,21 @@ export default function TicketsTab({ refreshTrigger }) {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by ticket ID, subject, or description..."
+              placeholder="Search by ticket ID, subject, customer, or description..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-9 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           <button
             type="submit"
@@ -209,6 +223,18 @@ export default function TicketsTab({ refreshTrigger }) {
             <p className="text-xs text-slate-400">
               Try adjusting your search terms or filter dropdowns.
             </p>
+            {(search || status || category || priority) && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear All Filters & Search</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -241,8 +267,8 @@ export default function TicketsTab({ refreshTrigger }) {
                         <td className="py-3 px-4 font-mono font-semibold text-indigo-600 dark:text-indigo-400">
                           {t.ticket_id}
                         </td>
-                        <td className="py-3 px-4 font-medium text-slate-900 dark:text-white">
-                          {t.customer_name}
+                        <td className="py-3 px-4 font-medium text-slate-900 dark:text-white font-mono text-[11px]">
+                          {t.customer_id || "—"}
                         </td>
                         <td className="py-3 px-4 text-slate-700 dark:text-slate-300 max-w-xs truncate">
                           {t.subject}

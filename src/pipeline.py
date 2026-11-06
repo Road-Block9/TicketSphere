@@ -29,6 +29,7 @@ from src.database import (
     get_ticket_count,
     get_all_tickets,
     get_db_path,
+    reset_demo_data,
 )
 from src.analytics import get_all_analytics_kpis
 from src.api_client import ingest_api_pipeline, DEFAULT_API_URL, DEFAULT_API_KEY

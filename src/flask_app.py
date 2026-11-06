@@ -28,7 +28,7 @@ if str(PROJECT_ROOT) not in sys.path:
 load_dotenv(PROJECT_ROOT / ".env")
 
 # Re-use existing validated pipeline modules from Modules 1-7
-from src.database import init_db, get_all_tickets, get_ticket_count, insert_tickets
+from src.database import init_db, get_all_tickets, get_ticket_count, insert_tickets, reset_demo_data
 from src.ingestion import read_csv_tickets
 from src.transformation import clean_and_transform_tickets
 from src.analytics import get_all_analytics_kpis
@@ -117,28 +117,70 @@ def list_tickets():
         priority_filter = request.args.get("priority", default=None, type=str)
         search_query = request.args.get("search", default=None, type=str)
 
-        df = get_all_tickets(limit=500)
+        if status_filter:
+            status_filter = status_filter.strip()
+        if category_filter:
+            category_filter = category_filter.strip()
+        if priority_filter:
+            priority_filter = priority_filter.strip()
+
+        db_path = app.config.get("DATABASE_PATH")
+        # Retrieve all tickets so search and filtering are never prematurely truncated
+        df = get_all_tickets(db_path=db_path)
 
         if not df.empty:
-            if status_filter:
-                df = df[df["status"].str.lower() == status_filter.lower()]
-            if category_filter:
-                cat_lower = category_filter.lower()
-                df = df[
-                    (df["category"].str.lower() == cat_lower) |
-                    (df["category"].str.lower().str.contains(cat_lower, na=False))
-                ]
-            if priority_filter:
-                df = df[df["priority"].str.lower() == priority_filter.lower()]
+            # Clean and sanitize search query (strip quotes, whitespace, commas, backticks)
+            clean_search = None
             if search_query:
-                q = search_query.lower()
-                df = df[
-                    df["ticket_id"].str.lower().str.contains(q, na=False) |
-                    df["subject"].str.lower().str.contains(q, na=False) |
-                    df["description"].str.lower().str.contains(q, na=False)
-                ]
+                clean_search = search_query.strip().strip("'\"`,;\r\n").strip().lower()
 
-            df = df.head(limit)
+            if clean_search:
+                t_id_match = df["ticket_id"].astype(str).str.strip().str.lower().str.contains(clean_search, na=False)
+                subj_match = df["subject"].astype(str).str.lower().str.contains(clean_search, na=False)
+                desc_match = df["description"].astype(str).str.lower().str.contains(clean_search, na=False)
+                cust_match = df["customer_id"].astype(str).str.strip().str.lower().str.contains(clean_search, na=False)
+                cat_match = df["category"].astype(str).str.lower().str.contains(clean_search, na=False)
+
+                search_matches = t_id_match | subj_match | desc_match | cust_match | cat_match
+                filtered_df = df[search_matches]
+
+                # If user searched directly for a ticket ID, do not let incompatible dropdown filters wipe out the ticket
+                is_direct_id_search = t_id_match.any()
+
+                if status_filter:
+                    s_mask = filtered_df["status"].astype(str).str.strip().str.lower() == status_filter.lower()
+                    if not is_direct_id_search or s_mask.any():
+                        filtered_df = filtered_df[s_mask]
+
+                if category_filter:
+                    cat_lower = category_filter.lower()
+                    c_mask = (
+                        (filtered_df["category"].astype(str).str.strip().str.lower() == cat_lower) |
+                        (filtered_df["category"].astype(str).str.lower().str.contains(cat_lower, na=False))
+                    )
+                    if not is_direct_id_search or c_mask.any():
+                        filtered_df = filtered_df[c_mask]
+
+                if priority_filter:
+                    p_mask = filtered_df["priority"].astype(str).str.strip().str.lower() == priority_filter.lower()
+                    if not is_direct_id_search or p_mask.any():
+                        filtered_df = filtered_df[p_mask]
+
+                df = filtered_df
+            else:
+                if status_filter:
+                    df = df[df["status"].astype(str).str.strip().str.lower() == status_filter.lower()]
+                if category_filter:
+                    cat_lower = category_filter.lower()
+                    df = df[
+                        (df["category"].astype(str).str.strip().str.lower() == cat_lower) |
+                        (df["category"].astype(str).str.lower().str.contains(cat_lower, na=False))
+                    ]
+                if priority_filter:
+                    df = df[df["priority"].astype(str).str.strip().str.lower() == priority_filter.lower()]
+
+            if limit:
+                df = df.head(limit)
 
         records = df_to_records(df)
         return jsonify({
@@ -249,10 +291,32 @@ def generate_report():
         return jsonify({"status": "error", "message": f"Report generation failed: {str(e)}"}), 500
 
 
+@app.route("/api/demo/reset", methods=["POST"])
+def reset_demo():
+    """
+    Safely and transactionally resets demo ticket data and ingestion logs in SQLite.
+    Restores the database to a clean demo baseline so CSV and API ingestions can be demonstrated fresh.
+    """
+    try:
+        db_path = app.config.get("DATABASE_PATH")
+        res = reset_demo_data(db_path=db_path)
+        return jsonify({
+            "status": "success",
+            "message": res["message"],
+            "data": res
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to reset demo data: {str(e)}"
+        }), 500
+
+
+
 def run_flask(port: int = 5000, host: str = "127.0.0.1", debug: bool = False):
     """Runs the Flask development server."""
     print(f"Starting Flask Backend API on http://{host}:{port}")
-    app.run(host=host, port=port, debug=debug)
+    app.run(host=host, port=port, debug=debug, use_reloader=False)
 
 
 if __name__ == "__main__":

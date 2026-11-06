@@ -3,7 +3,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Sparkles,
-  ShieldCheck,
   Cpu,
   Clock,
   Copy,
@@ -39,9 +38,14 @@ export default function GenAITab() {
     }
   };
 
+  const cleanReport = (reportData?.report || "").replace(
+    /^>\s*\*\*Deterministic Analytical Fallback Mode:\*\*.*?\n\n?/gm,
+    ""
+  );
+
   const handleCopy = () => {
-    if (reportData?.report) {
-      navigator.clipboard.writeText(reportData.report);
+    if (cleanReport) {
+      navigator.clipboard.writeText(cleanReport);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -125,22 +129,17 @@ export default function GenAITab() {
       {/* Restrained, Compact Report Generation Panel */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-xl transition-colors duration-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start space-x-3.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
-                  Support Insights Assistant
-                </h3>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                  AI-assisted
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed max-w-xl">
-                Synthesizes verified ticket metrics, operational bottlenecks, and SLA trends into a structured briefing grounded in SQLite analytics.
-              </p>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                Support Insights Assistant
+              </h3>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                AI-assisted
+              </span>
             </div>
           </div>
 
@@ -189,7 +188,6 @@ export default function GenAITab() {
               >
                 <Cpu className="w-3 h-3" />
                 <span>{reportData.model_name}</span>
-                {reportData.is_fallback && <span>(Deterministic Fallback)</span>}
               </span>
 
               {reportData.generation_time_seconds != null && (
@@ -237,12 +235,6 @@ export default function GenAITab() {
                 )}
               </button>
             </div>
-          </div>
-
-          {/* Strict Grounding Notice */}
-          <div className="px-5 py-2 bg-emerald-50/40 dark:bg-emerald-950/20 border-b border-emerald-100 dark:border-emerald-900/30 flex items-center space-x-2 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>{reportData.disclaimer}</span>
           </div>
 
           {/* Compact Verified KPI Metric Cards */}
@@ -314,13 +306,13 @@ export default function GenAITab() {
                   remarkPlugins={[remarkGfm]}
                   components={markdownComponents}
                 >
-                  {reportData.report}
+                  {cleanReport}
                 </ReactMarkdown>
               </div>
             ) : (
               <div className="relative">
                 <pre className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-xs text-slate-800 dark:text-slate-200 overflow-x-auto whitespace-pre-wrap leading-relaxed">
-                  {reportData.report}
+                  {cleanReport}
                 </pre>
               </div>
             )}

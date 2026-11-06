@@ -291,22 +291,55 @@ Companies receive large volumes of customer support tickets across categories (d
 
 ---
 
-## 14. Known Limitations and Pending Work
+## 14. Safe Reset Demo Data Feature
+- **Purpose and Behavior:**
+  - Provides a safe, transactional mechanism to restore TicketSphere's SQLite database to a clean demonstration baseline without deleting files, dropping tables, or mutating schemas.
+  - Enables demonstrators to ingest a CSV dataset, review resulting analytics and reports, click "Reset Demo Data", and immediately re-upload and re-ingest the exact same CSV without duplicate ticket rejection.
+- **UI Location & Experience (`frontend/src/components/IngestionTab.jsx`):**
+  - Located in the Data Ingestion section directly below the dual ingestion cards.
+  - Matches TicketSphere's established card layout, styling, and dark/light theme support.
+  - Distinctive red/rose warning action ("Reset Demo Data") with clear copy explaining the action's intent.
+  - On click, displays an accessible modal confirmation dialog with explicit "Cancel" and "Confirm Reset" buttons.
+  - Prevents double-submission by disabling actions and rendering an inline spinning indicator during execution.
+  - Shows clear dismissible success or failure banners with exact deletion statistics.
+  - Automatically triggers `onIngestionComplete()` upon success, immediately refreshing backend health, total ticket count badge, KPI cards, Recharts visualizations, and ticket explorer to 0 records.
+- **Backend Endpoint (`POST /api/demo/reset` in `src/flask_app.py`):**
+  - Handles HTTP POST requests and invokes `reset_demo_data(db_path)`.
+  - Supports dynamic `DATABASE_PATH` configuration via Flask `app.config` for isolated testing.
+  - Returns HTTP 200 with JSON payload `{status: "success", message: "...", data: {...}}` or HTTP 500 on failure with error details.
+- **Exact Data Affected & Baseline Restoration Approach (`src/database.py`):**
+  - **Affected Tables:** Deletes all rows from `tickets` and `ingestion_logs`. Clears `sqlite_sequence` entries for these tables if present.
+  - **Preserved:** All database schema definitions, table structures, column constraints, composite indexes (`idx_tickets_status`, `idx_tickets_category`, etc.), and foreign key enforcement remain 100% intact. Zero database files are deleted or recreated.
+  - **Transaction Safety:** Wrapped inside an atomic SQLite transaction (`BEGIN ... COMMIT`). If an unexpected error occurs, a full `ROLLBACK` is executed, preventing partial or inconsistent states.
+- **Files Added or Modified:**
+  - `src/database.py`: Added `reset_demo_data(db_path)` with atomic transaction management.
+  - `src/flask_app.py`: Registered `POST /api/demo/reset` endpoint with error handling and status responses.
+  - `src/pipeline.py`: Imported and exposed `reset_demo_data`.
+  - `frontend/src/api.js`: Added `api.resetDemoData()` client method.
+  - `frontend/src/components/IngestionTab.jsx`: Added Reset Demo Data card, confirmation modal dialog, feedback banners, and reactive refresh triggers.
+  - `tests/test_reset_demo_data.py`: Added 11 automated pytest test cases covering initial reset, idempotence, re-ingestion, duplicate detection preservation, analytics zeroing/recalculation, schema preservation, transaction rollback on failure, Flask API endpoints, downstream workflows, and connection persistence.
+- **Tests Executed and Results:**
+  - Pytest full suite: **103 passed out of 103 tests in 13.40s** (11/11 reset tests passing).
+  - Frontend production build: `npm run build` succeeds in 3.60s with 0 errors.
+
+---
+
+## 15. Known Limitations and Pending Work
 - Automated browser testing using Playwright driver encountered sandbox network download restrictions (offline 404); application frontend verified via Vite production build, linter, and live HTTP dev servers (`http://127.0.0.1:5173` and `http://127.0.0.1:5000`).
 - Kaggle ExploreMyData dataset (`customer_support_tickets.csv`) lacks ticket creation dates (only contains customer `Date of Purchase`), and correctly triggers minimum schema validation errors.
 - Documentation (`README.md`), presentation outline, and final capstone packaging are ready to be completed in Module 12.
 
 ---
 
-## 15. Current State and Exact Next Step
-- **Current State:** Visual identity refined to enterprise SaaS standard. All branding, status badges, toolbar buttons, and GenAI panels are restrained, understated, and functional across dark and light themes. 92 automated Pytest tests passing, 0 linter errors, 0 build errors.
+## 16. Current State and Exact Next Step
+- **Current State:** Safe Reset Demo Data feature fully implemented, tested across 11 dedicated scenarios, integrated into TicketSphere UI with confirmation modal, and verified with 103/103 passing automated tests. Vite frontend production build succeeds with 0 errors.
 - **Exact Next Step:** Proceed to Module 12 wrap-up documentation:
   1. Write comprehensive `README.md` with system architecture diagrams, tech stack breakdown, setup instructions, and capstone requirements mapping.
   2. Finalize presentation outline and evaluation talking points.
 
 ---
 
-## 16. Instructions for the Next AI Assistant
+## 17. Instructions for the Next AI Assistant
 If resuming or taking over:
 - Read `CONTEXT.md` first to confirm current progress and decisions.
 - Verify status against actual files in `d:\A Capstone`.

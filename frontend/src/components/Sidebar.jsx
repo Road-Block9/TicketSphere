@@ -19,22 +19,14 @@ export default function Sidebar({ activeTab, setActiveTab, backendStatus }) {
     <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 transition-colors duration-200 select-none">
       <div>
         {/* Brand Header */}
-        <div className="px-5 py-5 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h1 className="font-semibold text-slate-900 dark:text-slate-100 text-base tracking-tight leading-none">
-              TicketSphere
-            </h1>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal leading-normal mt-1.5">
-              Customer Support Analytics & GenAI
-            </p>
-          </div>
+        <div className="h-14 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center">
+          <h1 className="font-extrabold text-slate-900 dark:text-white text-xl tracking-tight leading-none">
+            TicketSphere
+          </h1>
         </div>
 
         {/* Navigation */}
         <nav className="p-3 space-y-1">
-          <p className="px-3 pt-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-            Modules
-          </p>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

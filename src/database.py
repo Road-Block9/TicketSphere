@@ -219,6 +219,71 @@ def execute_query(
         return pd.read_sql_query(sql, conn, params=params)
 
 
+def reset_demo_data(db_path: Optional[Union[str, Path]] = None) -> Dict[str, Any]:
+    """
+    Safely and transactionally resets the demo dataset:
+    - Removes all records from the 'tickets' table.
+    - Removes all records from the 'ingestion_logs' audit table.
+    - Preserves database schema, table structures, and performance indexes.
+    - Resets autoincrement sequence counters if present in sqlite_sequence.
+    - Executes within an atomic SQLite transaction (all-or-nothing).
+
+    Returns:
+        Dictionary containing:
+        - success: bool
+        - tickets_deleted: int
+        - logs_deleted: int
+        - remaining_tickets: int
+        - message: str
+    """
+    init_db(db_path)
+    resolved_path = get_db_path(db_path)
+
+    conn = get_connection(resolved_path)
+    try:
+        cursor = conn.cursor()
+
+        # Count existing records before deletion
+        cursor.execute("SELECT COUNT(*) FROM tickets;")
+        tickets_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM ingestion_logs;")
+        logs_count = cursor.fetchone()[0]
+
+        # Transactional deletion of demo records
+        cursor.execute("DELETE FROM tickets;")
+        cursor.execute("DELETE FROM ingestion_logs;")
+
+        # Reset autoincrement sequence counter if sqlite_sequence exists
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sqlite_sequence';"
+        )
+        if cursor.fetchone():
+            cursor.execute(
+                "DELETE FROM sqlite_sequence WHERE name IN ('tickets', 'ingestion_logs');"
+            )
+
+        conn.commit()
+
+        # Verify clean state
+        cursor.execute("SELECT COUNT(*) FROM tickets;")
+        remaining = cursor.fetchone()[0]
+
+        return {
+            "success": True,
+            "tickets_deleted": tickets_count,
+            "logs_deleted": logs_count,
+            "remaining_tickets": remaining,
+            "message": f"Successfully reset demo data: removed {tickets_count} ticket(s) and {logs_count} ingestion log(s)."
+        }
+    except Exception as e:
+        conn.rollback()
+        raise RuntimeError(f"Database reset transaction failed: {str(e)}") from e
+    finally:
+        conn.close()
+
+
+
 if __name__ == "__main__":
     from src.ingestion import read_csv_tickets
     from src.transformation import clean_and_transform_tickets

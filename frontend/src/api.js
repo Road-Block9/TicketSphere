@@ -114,4 +114,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
     });
   },
+
+  // Reset Demo Data
+  async resetDemoData() {
+    return request("/api/demo/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+  },
 };

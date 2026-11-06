@@ -30,3 +30,6 @@ Thumbs.db
 # Frontend build artifacts & dependencies
 frontend/node_modules/
 frontend/dist/
+
+# Graphify cache
+graphify-out/cache/

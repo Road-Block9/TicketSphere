@@ -128,8 +128,6 @@ def generate_fallback_report(kpis: Dict[str, Any]) -> GenAIReportResult:
     }
 
     report_lines = [
-        "> **Deterministic Analytical Fallback Mode:** Grounded strictly in verified SQLite query results (no external GenAI API key configured).",
-        "",
         "# Executive Support Insights Management Report",
         "",
         "## 1. Executive Summary",
