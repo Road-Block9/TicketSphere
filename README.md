@@ -2,47 +2,11 @@
 
 **Customer Support Ticket Analytics & GenAI Business Assistant**
 
-TicketSphere is an enterprise-grade customer support analytics platform and AI assistant. It integrates dual-channel data ingestion (CSV file uploads and live REST APIs), automated schema normalization, deterministic data transformation, idempotent relational storage in SQLite, parameterized SQL analytics, and an interactive executive dashboard powered by React 19, Tailwind CSS, and Recharts.
+TicketSphere is a customer support analytics platform with AI assistant. It integrates dual-channel data ingestion (CSV file uploads and live REST APIs), automated schema normalization, deterministic data transformation, idempotent relational storage in SQLite, parameterized SQL analytics, and an interactive executive dashboard powered by React 19, Tailwind CSS, and Recharts.
 
 The platform also includes a strictly grounded GenAI Insights Assistant powered by Google Gemini (with an honest deterministic analytical fallback) that translates raw database metrics into actionable operational recommendations without hallucinations.
 
 ---
-
-## Architecture & Data Flow
-
-```mermaid
-flowchart TD
-    subgraph DataSources["Data Ingestion Sources"]
-        CSV["CSV File Upload<br/>(Local Files / Benchmark Exports)"]
-        API["REST API Endpoint<br/>(Mock Server / External CRM)"]
-    end
-
-    subgraph CorePipeline["Core Data Pipeline"]
-        Ingest["Ingestion & Validation Layer<br/>(src/ingestion.py, src/api_client.py)<br/>• Column alias normalization<br/>• Stream rewinding & SSRF guard"]
-        Transform["Transformation & Quality Audit<br/>(src/transformation.py)<br/>• Timestamp parsing & validation<br/>• Duration math & deduplication<br/>• DataQualityReport generation"]
-        Storage["Relational Database Storage<br/>(src/database.py)<br/>• SQLite (customer_support.db)<br/>• Idempotent INSERT OR IGNORE<br/>• Composite query indexes"]
-    end
-
-    subgraph AnalyticsAI["Analytics & Intelligence"]
-        SQL["SQL Analytics Engine<br/>(src/analytics.py)<br/>• 7 Business SQL Queries<br/>• Dynamic Parameterized Filters"]
-        GenAI["GenAI Insights Assistant<br/>(src/genai_assistant.py)<br/>• Google Gemini API integration<br/>• Strict metric grounding<br/>• Deterministic fallback engine"]
-    end
-
-    subgraph Presentation["User Interface & API Gateway"]
-        Flask["Flask Backend REST API<br/>(src/flask_app.py)<br/>• /api/health, /api/analytics/kpis<br/>• /api/tickets, /api/ingest/*<br/>• /api/ai/report, /api/demo/reset"]
-        ReactUI["TicketSphere Frontend Dashboard<br/>(frontend/)<br/>• React 19 + Vite + Tailwind CSS<br/>• Recharts Visualizations<br/>• Real-time Ticket Explorer<br/>• Dark / Light Theme Support"]
-    end
-
-    CSV --> Ingest
-    API --> Ingest
-    Ingest --> Transform
-    Transform --> Storage
-    Storage --> SQL
-    SQL --> Flask
-    SQL --> GenAI
-    GenAI --> Flask
-    Flask <--> ReactUI
-```
 
 ---
 
@@ -83,9 +47,6 @@ flowchart TD
    - Anti-hallucination prompt architecture: prompts are injected strictly with verified database metrics.
    - **Deterministic Fallback Engine:** If no external API key is configured or if network access is restricted, TicketSphere automatically generates an honest, structured analytical management report derived directly from SQLite query results.
 
-7. **Safe Demo Data Reset:**
-   - Transactional, atomic database restoration (`POST /api/demo/reset`) that clears records while preserving schema definitions, table structures, and indexes.
-   - Protected by feature flag (`ENABLE_DEMO_RESET`) and UI confirmation modal to prevent accidental data loss.
 
 ---
 
@@ -98,7 +59,7 @@ flowchart TD
 | **API Ingestion & Mock Server** | Requests, FastAPI, Uvicorn |
 | **Data Processing & Database** | Pandas, NumPy, SQLite3 |
 | **Generative AI** | Google GenAI SDK (`google-genai`), Gemini 2.5 Flash / Deterministic Fallback Engine |
-| **Testing & Quality** | Pytest, Oxlint |
+| **Testing & Quality** | Pytest|
 
 ---
 
@@ -106,66 +67,66 @@ flowchart TD
 
 ```
 TicketSphere/
-├── .env.example                   # Environment configuration template
-├── .gitignore                     # Repository exclusion rules
-├── README.md                      # Project documentation and guide
-├── requirements.txt               # Backend Python dependencies
+├── .env.example
+├── .gitignore
+├── README.md
+├── requirements.txt
 ├── data/
-│   ├── DATA_DICTIONARY.md         # Schema rules, column specs, and question mappings
+│   ├── DATA_DICTIONARY.md
 │   ├── raw/
-│   │   └── customer_support_tickets.csv # 60-ticket synthetic sample dataset
-│   └── processed/                 # Runtime directory for SQLite database
+│   │   └── customer_support_tickets.csv
+│   └── processed/
 ├── frontend/
-│   ├── index.html                 # HTML entry point with fonts & metadata
-│   ├── package.json               # Frontend dependencies & npm scripts
-│   ├── package-lock.json          # Node dependency lockfile
-│   ├── postcss.config.js          # PostCSS configuration
-│   ├── tailwind.config.js         # Tailwind theme & color settings
-│   ├── vite.config.js             # Vite development server configuration
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.js
+│   ├── vite.config.js
 │   ├── public/
-│   │   └── favicon.svg            # TicketSphere brand monogram icon
+│   │   └── favicon.svg
 │   └── src/
-│       ├── main.jsx               # React DOM entry point
-│       ├── App.jsx                # Application layout & navigation controller
-│       ├── api.js                 # Centralized API client for Flask endpoints
-│       ├── index.css              # Global Tailwind CSS definitions
+│       ├── main.jsx
+│       ├── App.jsx
+│       ├── api.js
+│       ├── index.css
 │       └── components/
-│           ├── Header.jsx         # Top navigation, status indicator & theme toggle
-│           ├── Sidebar.jsx        # Navigation sidebar with brand header
-│           ├── OverviewTab.jsx    # KPI summary cards, Recharts visualizations & filters
-│           ├── IngestionTab.jsx   # CSV upload, REST API trigger & Data Quality audit
-│           ├── GenAITab.jsx       # AI executive report generator & metric pills
-│           └── TicketsTab.jsx     # Searchable ticket table with detail expansion
+│           ├── Header.jsx
+│           ├── Sidebar.jsx
+│           ├── OverviewTab.jsx
+│           ├── IngestionTab.jsx
+│           ├── GenAITab.jsx
+│           └── TicketsTab.jsx
 ├── scripts/
-│   ├── generate_sample_dataset.py # Deterministic synthetic dataset generator
-│   └── inspect_dataset.py         # CSV schema audit and inspection script
+│   ├── generate_sample_dataset.py
+│   └── inspect_dataset.py
 ├── src/
-│   ├── __init__.py                # Package marker
-│   ├── analytics.py               # SQL business queries and dynamic filters
-│   ├── api_client.py              # Outbound REST API client with SSRF validation
-│   ├── database.py                # SQLite schema management, indexes & transactions
-│   ├── flask_app.py               # Flask REST API endpoints and error handlers
-│   ├── genai_assistant.py         # Grounded GenAI integration & fallback reporter
-│   ├── ingestion.py               # CSV reading, alias mapping, and validation
-│   ├── mock_api.py                # Local FastAPI simulated support ticket server
-│   ├── pipeline.py                # Multi-stage orchestrator
-│   └── transformation.py          # Data cleaning, deduplication, and quality audit
+│   ├── __init__.py
+│   ├── analytics.py
+│   ├── api_client.py
+│   ├── database.py
+│   ├── flask_app.py
+│   ├── genai_assistant.py
+│   ├── ingestion.py
+│   ├── mock_api.py
+│   ├── pipeline.py
+│   └── transformation.py
 └── tests/
-    ├── __init__.py                # Test package marker
-    ├── fixtures/                  # Test CSV fixtures and schema variations
-    ├── test_analytics.py          # Unit tests for SQL queries and filter logic
-    ├── test_api_ingestion.py      # Unit tests for REST API ingestion & errors
-    ├── test_csv_variations.py     # Schema flexibility & datetime parsing tests
-    ├── test_database.py           # Database transaction and indexing tests
-    ├── test_e2e_workflow.py       # End-to-end multi-step integration lifecycle test
-    ├── test_error_handling.py     # Resiliency tests for malformed data & timeouts
-    ├── test_flask_api.py          # Flask REST API endpoint verification
-    ├── test_genai.py              # GenAI grounding, prompt & fallback tests
-    ├── test_ingestion.py          # CSV reader and validator unit tests
-    ├── test_pipeline.py           # Unified orchestrator verification tests
-    ├── test_reset_demo_data.py    # Transactional demo reset feature tests
-    ├── test_security.py           # SSRF, CORS, upload limits & auth tests
-    └── test_transformation.py     # Cleaning, deduplication & duration math tests
+    ├── __init__.py
+    ├── fixtures/
+    ├── test_analytics.py
+    ├── test_api_ingestion.py
+    ├── test_csv_variations.py
+    ├── test_database.py
+    ├── test_e2e_workflow.py
+    ├── test_error_handling.py
+    ├── test_flask_api.py
+    ├── test_genai.py
+    ├── test_ingestion.py
+    ├── test_pipeline.py
+    ├── test_reset_demo_data.py
+    ├── test_security.py
+    └── test_transformation.py
 ```
 
 ---
