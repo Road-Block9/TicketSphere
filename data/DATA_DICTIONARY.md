@@ -35,7 +35,7 @@ This dataset contains customer support ticket records captured across multiple c
 
 ---
 
-## 4. Analytical Mapping (Master Prompt Section 4.D)
+## 4. Analytical Mapping
 
 | Business Question | Required Fields | Calculation Method |
 | :--- | :--- | :--- |
