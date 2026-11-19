@@ -26,7 +26,7 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
   const defaultMockUrl =
     import.meta.env.VITE_MOCK_API_URL || "http://127.0.0.1:8000/api/v1/tickets";
   const [apiUrl, setApiUrl] = useState(defaultMockUrl);
-  const [apiKey, setApiKey] = useState("capstone-demo-key-2026");
+  const [apiKey, setApiKey] = useState("");
   const [apiLoading, setApiLoading] = useState(false);
   const [apiResult, setApiResult] = useState(null);
   const [apiError, setApiError] = useState(null);
@@ -39,7 +39,18 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      const maxUploadBytes = 16 * 1024 * 1024; // 16 MB limit
+      if (file.size > maxUploadBytes) {
+        setCsvError(
+          `File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds the maximum allowed limit of 16 MB.`
+        );
+        setCsvErrorDetails(["Please select a CSV file smaller than 16 MB."]);
+        setSelectedFile(null);
+        e.target.value = "";
+        return;
+      }
+      setSelectedFile(file);
       setCsvResult(null);
       setCsvError(null);
       setCsvErrorDetails([]);
@@ -337,14 +348,14 @@ export default function IngestionTab({ onIngestionComplete, setActiveTab }) {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  API Bearer / Secret Key
+                  API Key / Bearer Token (Optional)
                 </label>
                 <input
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Optional (leave blank for local mock or public APIs)"
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  required
                 />
               </div>
 

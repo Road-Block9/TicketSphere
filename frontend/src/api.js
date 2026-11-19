@@ -116,10 +116,15 @@ export const api = {
   },
 
   // Reset Demo Data
-  async resetDemoData() {
+  async resetDemoData(token) {
+    const resetToken = token || import.meta.env.VITE_DEMO_RESET_TOKEN || "";
+    const headers = { "Content-Type": "application/json" };
+    if (resetToken) {
+      headers["X-Reset-Token"] = resetToken;
+    }
     return request("/api/demo/reset", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
     });
   },
 };

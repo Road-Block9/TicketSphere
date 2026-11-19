@@ -124,8 +124,8 @@ def run_api_pipeline(
     default_url = DEFAULT_API_URL
     default_key = DEFAULT_API_KEY
 
-    target_url = api_url if api_url and api_url.strip() else default_url
-    target_key = api_key if api_key and api_key.strip() else default_key
+    target_url = api_url.strip() if (api_url and api_url.strip()) else default_url
+    target_key = api_key.strip() if (api_key and api_key.strip()) else (default_key if default_key else None)
 
     # Call existing API ingestion pipeline from Module 6
     api_result = ingest_api_pipeline(

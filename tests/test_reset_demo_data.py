@@ -46,9 +46,11 @@ def sample_csv(tmp_path):
 
 @pytest.fixture
 def flask_test_client(temp_db):
-    """Provides a Flask test client configured with an isolated temporary database."""
+    """Provides a Flask test client configured with an isolated temporary database and demo reset enabled."""
     app.config["TESTING"] = True
     app.config["DATABASE_PATH"] = temp_db
+    app.config["ENABLE_DEMO_RESET"] = True
+    app.config["DEMO_RESET_TOKEN"] = ""
     with app.test_client() as client:
         yield client
 

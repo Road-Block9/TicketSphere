@@ -13,12 +13,14 @@ Provides RESTful endpoints connecting the React frontend to the existing Python 
 
 import sys
 import os
+import hmac
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import pandas as pd
+from werkzeug.exceptions import RequestEntityTooLarge
 
 # Add project root to sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -32,12 +34,42 @@ from src.database import init_db, get_all_tickets, get_ticket_count, insert_tick
 from src.ingestion import read_csv_tickets
 from src.transformation import clean_and_transform_tickets
 from src.analytics import get_all_analytics_kpis
-from src.api_client import ingest_api_pipeline
+from src.api_client import ingest_api_pipeline, validate_api_url, DEFAULT_API_URL
 from src.genai_assistant import generate_support_insights_report
 
 app = Flask(__name__)
-# Enable CORS for local Vite development (port 5173 / localhost)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Configure Trusted CORS Origins (replaces wildcard CORS)
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+def get_allowed_cors_origins() -> list:
+    custom_env = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
+    if custom_env:
+        custom_origins = [o.strip() for o in custom_env.split(",") if o.strip()]
+        return list(dict.fromkeys(DEFAULT_CORS_ORIGINS + custom_origins))
+    return DEFAULT_CORS_ORIGINS
+
+allowed_cors_origins = get_allowed_cors_origins()
+CORS(app, resources={r"/api/*": {"origins": allowed_cors_origins}})
+
+# File Upload Limit Configuration (Default 16 MB, configurable via MAX_UPLOAD_SIZE_BYTES)
+DEFAULT_MAX_UPLOAD_SIZE = 16 * 1024 * 1024  # 16 MB
+app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", DEFAULT_MAX_UPLOAD_SIZE))
+
+@app.errorhandler(413)
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    max_mb = app.config.get("MAX_CONTENT_LENGTH", DEFAULT_MAX_UPLOAD_SIZE) / (1024 * 1024)
+    return jsonify({
+        "status": "error",
+        "message": f"Uploaded file exceeds the maximum allowed size limit of {max_mb:.0f} MB.",
+        "errors": [f"File size exceeds the {max_mb:.0f} MB upload limit."]
+    }), 413
 
 # Ensure DB schema is initialized on startup
 init_db()
@@ -238,19 +270,32 @@ def ingest_csv():
             "updated_kpis": res.get("updated_kpis")
         }), 200
 
+    except RequestEntityTooLarge:
+        raise
     except Exception as e:
         return jsonify({"status": "error", "message": f"Server error during CSV processing: {str(e)}"}), 500
 
 
 @app.route("/api/ingest/api", methods=["POST"])
 def ingest_api():
-    """Fetches tickets from the REST API endpoint and routes through the pipeline."""
+    """Fetches tickets from the REST API endpoint and routes through the pipeline with SSRF validation."""
     try:
         payload = request.get_json(silent=True) or {}
         api_url = payload.get("api_url")
         api_key = payload.get("api_key")
 
-        res = run_api_pipeline(api_url=api_url, api_key=api_key)
+        target_url = api_url.strip() if (api_url and isinstance(api_url, str) and api_url.strip()) else DEFAULT_API_URL
+
+        # Validate target URL against SSRF before triggering request
+        is_valid, validation_err = validate_api_url(target_url)
+        if not is_valid:
+            return jsonify({
+                "status": "error",
+                "message": f"Disallowed or invalid API endpoint URL: {validation_err}",
+                "stage_failed": "api_retrieval"
+            }), 400
+
+        res = run_api_pipeline(api_url=target_url, api_key=api_key)
         if not res["success"]:
             return jsonify({
                 "status": "error",
@@ -291,13 +336,58 @@ def generate_report():
         return jsonify({"status": "error", "message": f"Report generation failed: {str(e)}"}), 500
 
 
+def is_demo_reset_enabled() -> bool:
+    """Checks whether the demo reset endpoint is permitted."""
+    if "ENABLE_DEMO_RESET" in app.config:
+        val = app.config["ENABLE_DEMO_RESET"]
+        if isinstance(val, bool):
+            return val
+        return str(val).lower() in ("true", "1", "yes")
+    return os.getenv("ENABLE_DEMO_RESET", "false").lower() in ("true", "1", "yes")
+
+
 @app.route("/api/demo/reset", methods=["POST"])
 def reset_demo():
     """
     Safely and transactionally resets demo ticket data and ingestion logs in SQLite.
     Restores the database to a clean demo baseline so CSV and API ingestions can be demonstrated fresh.
+    Protected by ENABLE_DEMO_RESET (disabled by default) and optional DEMO_RESET_TOKEN authorization.
     """
     try:
+        # 1. Enforce feature toggle: disabled by default
+        if not is_demo_reset_enabled():
+            return jsonify({
+                "status": "error",
+                "message": (
+                    "Demo data reset is disabled on this server. "
+                    "To enable it for local demonstrations, set ENABLE_DEMO_RESET=true in your environment."
+                )
+            }), 403
+
+        # 2. Check authorization token if DEMO_RESET_TOKEN is configured
+        expected_token = app.config.get(
+            "DEMO_RESET_TOKEN",
+            os.getenv("DEMO_RESET_TOKEN", "")
+        )
+        if isinstance(expected_token, str):
+            expected_token = expected_token.strip()
+        else:
+            expected_token = str(expected_token).strip()
+
+        if expected_token:
+            auth_header = request.headers.get("Authorization", "").strip()
+            bearer_token = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
+            custom_header_token = request.headers.get("X-Reset-Token", "").strip()
+            payload = request.get_json(silent=True) or {}
+            body_token = payload.get("reset_token", "").strip() if isinstance(payload, dict) else ""
+
+            provided_token = custom_header_token or bearer_token or body_token
+            if not provided_token or not hmac.compare_digest(provided_token, expected_token):
+                return jsonify({
+                    "status": "error",
+                    "message": "Unauthorized: Invalid or missing demo reset authorization token."
+                }), 401
+
         db_path = app.config.get("DATABASE_PATH")
         res = reset_demo_data(db_path=db_path)
         return jsonify({
@@ -313,11 +403,13 @@ def reset_demo():
 
 
 
-def run_flask(port: int = 5000, host: str = "127.0.0.1", debug: bool = False):
-    """Runs the Flask development server."""
-    print(f"Starting Flask Backend API on http://{host}:{port}")
-    app.run(host=host, port=port, debug=debug, use_reloader=False)
+def run_flask(port: int = 5000, host: str = "127.0.0.1", debug: Optional[bool] = None):
+    """Runs the Flask development server with debug mode disabled by default."""
+    if debug is None:
+        debug = os.getenv("FLASK_DEBUG", "false").lower() in ("true", "1", "yes")
+    print(f"Starting Flask Backend API on http://{host}:{port} (debug={debug})")
+    app.run(host=host, port=port, debug=debug, use_reloader=debug)
 
 
 if __name__ == "__main__":
-    run_flask(debug=True)
+    run_flask()

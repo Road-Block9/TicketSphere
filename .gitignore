@@ -9,27 +9,39 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+*.tmp
 
 # Environment variables & secrets
 .env
+.env.*
+!.env.example
 
 # Local SQLite databases (preserve raw/sample inputs, ignore generated DBs)
 *.db
 *.sqlite3
 data/processed/*.db
+data/*.db
+
+# Frontend build artifacts & dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# Internal AI agent rules, skills, and knowledge graph caches
+.agents/
+graphify-out/
+skills-lock.json
+
+# Internal development tracking
+CONTEXT.md
 
 # IDE & OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-# Streamlit runtime
-.streamlit/secrets.toml
-
-# Frontend build artifacts & dependencies
-frontend/node_modules/
-frontend/dist/
-
-# Graphify cache
-graphify-out/cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
