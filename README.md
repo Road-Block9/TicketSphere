@@ -164,5 +164,3 @@ TicketSphere/
 3. The database is restored to a clean baseline (0 records) while schema and indexes remain intact.
 
 ---
-- **SSRF Allowlist Protection:** The REST API ingestion client validates target URLs to prevent server-side request forgery. Outbound requests to loopback addresses (`127.0.0.1`) are permitted when `ALLOW_LOCAL_MOCK_API=true` for local development.
-- **Deterministic GenAI Fallback:** Guarantees that offline reviewers, automated test runners, and users without an API key still receive accurate, data-grounded reports rather than failure screens.
